@@ -25,9 +25,9 @@
         </a>
 
         <span class="current-date">
-            {{ week_start.strftime("%B %-d") }}
+               {{ week_start.strftime("%B") }} {{ week_start.day }}
             &ndash;
-            {{ week_end.strftime("%B %-d, %Y") }}
+               {{ week_end.strftime("%B") }} {{ week_end.day }}, {{ week_end.year }}
         </span>
 
         <a
