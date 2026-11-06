@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Settings</title>
+    <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-<form autocomplete="off" method="POST" action="{{ base_url }}/{{ calendar_id }}/new_task">
+<form class="task-details-form" autocomplete="off" method="POST" action="{{ base_url }}/{{ calendar_id }}/new_task">
 <label for="day_start">Select a day start time:</label>
 <input type="time" id="day_start" name="appt">
 <br/>

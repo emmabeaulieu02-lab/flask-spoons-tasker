@@ -3,7 +3,7 @@
     <title>Calendar</title>
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for("static", filename="") }}favicon_{{ current_day }}.png" id="favicon">
-    <meta name="viewport" content="width=400" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <div id="statusbar">Processing...</div>
@@ -64,34 +64,6 @@
             Month
         </a>
     </header>
-
-    <section class="activity-bank" aria-label="Activity bank">
-        <p class="activity-bank-help">
-            Drag an activity onto the calendar, or tap an activity and then tap a time.
-        </p>
-        <div class="activity-bins">
-            {% for level_color, level_label in energy_levels %}
-            <div class="activity-bin" style="border-color: {{ level_color }}">
-                <h2 class="activity-bin-title">{{ level_label }}</h2>
-                {% for title, color, minutes in activity_bank if color == level_color %}
-                <button
-                    type="button"
-                    class="activity"
-                    draggable="true"
-                    aria-pressed="false"
-                    data-title="{{ title }}"
-                    data-color="{{ color }}"
-                    data-minutes="{{ minutes }}"
-                    style="background-color: {{ color }}"
-                >
-                    {{ title }}
-                    <span class="activity-length">{{ minutes }} min</span>
-                </button>
-                {% endfor %}
-            </div>
-            {% endfor %}
-        </div>
-    </section>
 
     <div class="week-scroll">
         <div
@@ -224,6 +196,34 @@
             {% endfor %}
         </div>
     </div>
+    <section class="activity-bank" aria-label="Activity bank">
+        <p class="activity-bank-help">
+            Drag an activity onto the calendar, or tap an activity and then tap a time.
+        </p>
+        <div class="activity-bins">
+            {% for level_color, level_label in energy_levels %}
+            <div class="activity-bin" style="border-color: {{ level_color }}">
+                <h2 class="activity-bin-title">{{ level_label }}</h2>
+                {% for title, color, minutes in activity_bank if color == level_color %}
+                <button
+                    type="button"
+                    class="activity"
+                    draggable="true"
+                    aria-pressed="false"
+                    data-title="{{ title }}"
+                    data-color="{{ color }}"
+                    data-minutes="{{ minutes }}"
+                    style="background-color: {{ color }}"
+                >
+                    {{ title }}
+                    <span class="activity-length">{{ minutes }} min</span>
+                </button>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
     <script>
     (function () {
         var startHour = {{ start_hour }};

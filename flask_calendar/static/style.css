@@ -567,3 +567,146 @@ ul.tasks li:not(.greyed),
     background-color: #EAF4FF;
     cursor: copy;
 }
+
+/* ---------- Scaling for computer and tablet ---------- */
+
+/* Bigger header buttons so they are easy to tap */
+.header-button,
+.header .button {
+    font-size: 18px;
+    min-height: 40px;
+    min-width: 40px;
+}
+
+/* Week view: the seven days share the screen width instead of a fixed 1050px */
+.week-view {
+    grid-template-columns: 56px repeat(7, minmax(0, 1fr));
+    min-width: 0;
+}
+
+.week-task,
+.week-all-day-task {
+    overflow-wrap: anywhere;
+}
+
+/* Activity bank stays pinned to the bottom of the screen, so it is always in reach */
+.activity-bank {
+    background: #FCFCFC;
+    border-top: 2px solid #dadce0;
+    bottom: 0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    max-height: 35vh;
+    overflow-y: auto;
+    position: sticky;
+    z-index: 10;
+}
+
+.activity-bins {
+    flex-wrap: nowrap;
+}
+
+.activity-bin {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* Task and settings forms: centred, larger text and touch-sized controls */
+.task-details-form {
+    font-size: 1.1rem;
+    margin: 0 auto;
+    max-width: 640px;
+    padding: 12px;
+}
+
+.task-details-form label {
+    display: inline-block;
+    margin-top: 12px;
+}
+
+.task-details-form input[type=text],
+.task-details-form input[type=date],
+.task-details-form input[type=time],
+.task-details-form input[type=number],
+.task-details-form select {
+    box-sizing: border-box;
+    font-size: 1rem;
+    min-height: 44px;
+    padding: 4px 8px;
+}
+
+.task-details-form input[type=text] {
+    width: 100%;
+}
+
+.task-details-form input[type=checkbox],
+.task-details-form input[type=radio] {
+    height: 24px;
+    vertical-align: middle;
+    width: 24px;
+}
+
+.task-details-form .form-button {
+    font-size: 1rem;
+    min-height: 44px;
+    min-width: 88px;
+    padding: 8px 16px;
+}
+
+/* Week header: arrows and links sized like real buttons */
+.week-header a.header-button {
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    display: inline-flex;
+    font-size: 28px;
+    justify-content: center;
+    line-height: 1;
+}
+
+.week-header .back-to-current,
+.week-header .view-link {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+/* Month header: Settings and View Past easy to tap */
+.enter-settings,
+.toggle-past-events {
+    font-size: 16px;
+    min-height: 40px;
+    padding: 4px 12px;
+}
+
+/* Computers: a more compact activity bank so the calendar keeps more room */
+@media screen and (min-width: 1025px) and (hover: hover) {
+    .activity-bank {
+        padding: 4px 12px;
+    }
+
+    .activity-bank-help {
+        margin: 2px 0 4px 0;
+    }
+
+    .activity {
+        font-size: 1em;
+        min-height: 36px;
+        padding: 6px 12px;
+    }
+}
+
+/* Phones: keep the week scrollable sideways so days stay readable */
+@media screen and (max-width: 650px) {
+    .week-view {
+        grid-template-columns: 54px repeat(7, 110px);
+        min-width: 824px;
+    }
+
+    .activity-bins {
+        flex-wrap: wrap;
+    }
+
+    .activity-bin {
+        flex: 1 1 100%;
+    }
+}
