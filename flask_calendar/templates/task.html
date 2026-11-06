@@ -162,12 +162,11 @@
         </div>
 
         <div id="colors-and-emojis">
-            <label for="color">Color</label><br/>
-            <input class="form-button color-picker" type="color"
-                value="{{ task.get("color", button_default_color_value) }}" id="color_custom" />
+            <label>How much energy will this take?</label><br/>
+            <input type="hidden" value="{{ task.get("color", button_default_color_value) }}" id="color_custom" />
             {% for color, label in buttons_colors %}
-                <input class="form-button color" style="color:{{ color }}" data-color="{{ color }}" type="button"
-                    value="{{ label }}" />
+                <input class="form-button color" type="button" value="{{ label }}" data-color="{{ color }}"
+                    style="background-color:{{ color }}; color:#000; font-size:1.2em; padding:12px 20px; margin:6px; border-radius:8px; border:4px solid {{ 'black' if task.get('color', button_default_color_value) == color else 'transparent' }};" />
             {% endfor %}
             <input type="hidden" value="{{ task.get("color", button_default_color_value) }}" id="color" name="color" />
             <br/>
@@ -309,6 +308,10 @@
                     case "form-button color":
                         document.getElementById("color").value = eventData.target.getAttribute("data-color");
                         document.getElementById("color_custom").value = eventData.target.getAttribute("data-color");
+                        document.querySelectorAll(".form-button.color").forEach(function(button) {
+                            button.style.borderColor = "transparent";
+                        });
+                        eventData.target.style.borderColor = "black";
                         return false;
                         break;
                     case "form-button emoji":

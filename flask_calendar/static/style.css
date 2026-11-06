@@ -491,3 +491,11 @@ ul.tasks li a {
         min-width: 894px;
     }
 }
+
+/* Energy colours: dark text so green, yellow and red tasks are all readable */
+ul.tasks li:not(.greyed),
+.week-all-day-task,
+.week-task,
+.week-task-details a {
+    color: #000 !important;
+}

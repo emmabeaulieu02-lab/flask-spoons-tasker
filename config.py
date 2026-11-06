@@ -49,9 +49,9 @@ EMOJIS_ENABLED = False
 # Colors for new task buttons
 BUTTON_CUSTOM_COLOR_VALUE = "#3EB34F"
 BUTTONS_COLORS_LIST = (
-    ("#FF4848", "Red"),
-    ("#F2981A", "Orange"),
-    ("#3EB34F", "Green"),
+    ("#3EB34F", "Green - low energy"),
+    ("#F2C81A", "Yellow - medium energy"),
+    ("#FF4848", "Red - high energy"),
 )
 
 # percent of chance to do a GC-like sweep on save and clean empty and/or past hidden entries.
