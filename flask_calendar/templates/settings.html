@@ -2,45 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Settings</title>
+    <title>Settings - Energy Calendar</title>
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-<main class="task-details-form">
-<h1>Settings</h1>
-<form autocomplete="off" method="POST" action="{{ base_url }}/{{ calendar_id }}/new_task">
-<label for="day_start">Select a day start time:</label>
-<input type="time" id="day_start" name="appt">
-<br/>
+<main class="task-details-form settings-page">
+    <h1>Settings</h1>
 
-<label for="day_end">Select a day end time:</label>
-<input type="time" id="day_end" name="appt">
-<br/>
+    {% if saved %}
+    <div class="save-message save-message-visible" role="status">Your settings are saved.</div>
+    {% endif %}
+    {% if forgot %}
+    <div class="save-message save-message-visible" role="status">The calendar has forgotten what it learned.</div>
+    {% endif %}
 
-<label for="week_start">Choose a week start day:</label>
+    <form autocomplete="off" method="POST" action="{{ url_for('save_settings_action', calendar_id=calendar_id) }}">
 
-<select name="week_start" id="week_start">
-  <option value="saturday">Saturday</option>
-  <option value="sunday">Sunday</option>
-  <option value="monday">Monday</option>
-</select>
-    <br/>
-    <label for="rest">Rest period between repeated tasks</label>
-    <input type="number" id="rest" name="rest"><br>
+        <h2>Balancing my week</h2>
+        <p class="settings-help">
+            Each task adds energy points to its day:
+            green {{ energy_points["low"] }}, yellow {{ energy_points["medium"] }}, red {{ energy_points["high"] }}.
+            The calendar shows a message when a day goes over these limits.
+        </p>
 
-    <label for="heavy_period">Choose a preferred time of day for tasks: </label>
+        <div class="settings-row">
+            <label for="daily_limit">Most energy points in one day</label>
+            <input type="number" id="daily_limit" name="daily_limit" min="0.5" max="50" step="0.5"
+                value="{{ "%g"|format(settings.daily_limit|float) }}">
+        </div>
 
-<select name="heavy_period" id="heavy_period">
-  <option value="morning">morning</option>
-  <option value="afternoon">afternoon</option>
-  <option value="evening">evening</option>
-</select>
-    <br/>
-<input class="form-button" type="submit" value="Save" />
+        <div class="settings-row">
+            <label for="max_red">Most red tasks in one day</label>
+            <input type="number" id="max_red" name="max_red" min="0" max="10" step="1"
+                value="{{ settings.max_red }}">
+        </div>
 
-<input class="form-button" type="button" value="Cancel" onclick="window.history.go(-1); return false;" />
-</form>
+        <div class="settings-row">
+            <label for="red_time">Best time of day for red tasks</label>
+            <p class="settings-help" id="red_time_help">
+                A starting point for "Suggest a balanced week". The calendar also learns from where you put your tasks.
+            </p>
+            <select id="red_time" name="red_time" aria-describedby="red_time_help">
+                <option value="any" {% if settings.red_time == "any" %}selected{% endif %}>Any time</option>
+                <option value="morning" {% if settings.red_time == "morning" %}selected{% endif %}>Morning (before 12:00)</option>
+                <option value="afternoon" {% if settings.red_time == "afternoon" %}selected{% endif %}>Afternoon (12:00 to 17:00)</option>
+                <option value="evening" {% if settings.red_time == "evening" %}selected{% endif %}>Evening (after 17:00)</option>
+            </select>
+        </div>
+
+        <div class="settings-row">
+            <label class="check-option" for="rest_after_red_day">
+                <input type="checkbox" id="rest_after_red_day" name="rest_after_red_day" value="1"
+                    {% if settings.rest_after_red_day %}checked{% endif %}>
+                Remind me to rest: warn when two days in a row both have red tasks
+            </label>
+        </div>
+
+        <h2>My day</h2>
+
+        <div class="settings-row">
+            <label for="day_start">My day starts at</label>
+            <select id="day_start" name="day_start">
+                {% for hour in hours %}
+                <option value="{{ hour }}" {% if hour == settings.day_start|int %}selected{% endif %}>{{ "%02d:00"|format(hour) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="settings-row">
+            <label for="day_end">My day ends at</label>
+            <select id="day_end" name="day_end">
+                {% for hour in hours %}
+                {% if hour > 0 %}
+                <option value="{{ hour }}" {% if hour == settings.day_end|int %}selected{% endif %}>{{ "%02d:00"|format(hour) }}</option>
+                {% endif %}
+                {% endfor %}
+                <option value="24" {% if settings.day_end|int == 24 %}selected{% endif %}>24:00</option>
+            </select>
+        </div>
+
+        <input class="form-button" type="submit" value="Save" />
+        <a class="form-button button-link" href="{{ url_for('weekly_calendar_action', calendar_id=calendar_id) }}">Back to calendar</a>
+    </form>
+
+    <h2>What the calendar has learned</h2>
+    {% if learned %}
+    <ul class="learned-list">
+        {% for sentence in learned %}
+        <li>{{ sentence }}</li>
+        {% endfor %}
+    </ul>
+    <p class="settings-help">It learns from where you add and move tasks, and uses this to suggest a balanced week.</p>
+    <form method="POST" action="{{ url_for('forget_learning_action', calendar_id=calendar_id) }}">
+        <input class="form-button" type="submit" value="Forget what it learned" />
+    </form>
+    {% else %}
+    <p class="settings-help">Nothing yet. As you add and move tasks, it learns when you like to do them.</p>
+    {% endif %}
 </main>
 </body>
 </html>

@@ -1037,3 +1037,176 @@ button {
     opacity: 0.9;
     z-index: 20;
 }
+
+/* ---------- Energy points and balance messages ---------- */
+.energy-total {
+    border-radius: 6px;
+    color: #2B2B2B;
+    font-size: 0.85em;
+    margin: 2px 0;
+}
+
+.energy-total-over {
+    font-weight: 700;
+}
+
+.energy-warning {
+    margin-top: 2px;
+}
+
+.save-message-warning {
+    background: #FBF0D9;
+    border-color: #8A6A00;
+}
+
+/* Lock and repeat symbols on tasks */
+.lock-tag {
+    display: inline-block;
+    margin-right: 3px;
+}
+
+/* "Every week" option in the choose-a-day panel */
+.place-repeat {
+    align-items: center;
+    display: inline-flex;
+    gap: 6px;
+}
+
+.place-repeat input,
+.check-option input {
+    height: 24px;
+    width: 24px;
+}
+
+/* Task form and settings: simple check options */
+.simple-options {
+    margin-top: 12px;
+}
+
+.check-option {
+    align-items: center;
+    display: flex !important;
+    gap: 10px;
+    font-weight: 400 !important;
+    margin-top: 10px;
+}
+
+.more-repeat-options {
+    margin-top: 12px;
+}
+
+.more-repeat-options summary {
+    cursor: pointer;
+    font-weight: 700;
+    min-height: 32px;
+}
+
+.settings-page h2 {
+    font-size: 1.2em;
+    margin: 20px 0 4px 0;
+}
+
+.settings-help {
+    margin: 4px 0 8px 0;
+}
+
+.settings-row {
+    margin: 10px 0;
+}
+
+.settings-row label {
+    display: block;
+    margin-top: 0;
+}
+
+.settings-row .check-option {
+    display: flex !important;
+}
+
+.button-link {
+    background: #EFEFEF;
+    border: 1px solid #767676;
+    border-radius: 3px;
+    color: #1F1F1F;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.week-header .view-link-plain {
+    margin-left: 0;
+}
+
+/* ---------- Suggest a balanced week ---------- */
+.suggest-link {
+    background: #E6EEF8;
+    border-color: #1A4FA0 !important;
+}
+
+.suggestion-panel {
+    background: #FDFCF9;
+    border: 2px solid #1A4FA0;
+    border-radius: 10px;
+    margin: 6px 12px 10px 12px;
+    padding: 10px 14px;
+}
+
+.suggestion-panel h2 {
+    font-size: 1.2em;
+    margin: 0 0 4px 0;
+}
+
+.suggestion-panel p {
+    margin: 4px 0;
+}
+
+.suggestion-list {
+    margin: 6px 0;
+    padding-left: 20px;
+}
+
+.suggestion-list li {
+    list-style: disc;
+    margin: 4px 0;
+}
+
+.suggestion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.suggestion-accept {
+    background: #1A4FA0;
+    border: 2px solid #1A4FA0;
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+/* Dashed preview of where a suggested task would go */
+.suggest-ghost {
+    border: 3px dashed #1A4FA0;
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: #1F1F1F;
+    font-size: 13px;
+    font-weight: 700;
+    left: 3px;
+    overflow: hidden;
+    padding: 2px 4px;
+    pointer-events: none;
+    position: absolute;
+    right: 3px;
+    z-index: 5;
+}
+
+.energy-ghost-low { background: rgba(127, 201, 143, 0.35); }
+.energy-ghost-medium { background: rgba(243, 212, 107, 0.35); }
+.energy-ghost-high { background: rgba(240, 154, 154, 0.35); }
+
+.learned-list li {
+    list-style: disc;
+    margin: 4px 0 4px 20px;
+}

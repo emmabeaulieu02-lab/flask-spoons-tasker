@@ -60,6 +60,8 @@
             <br/>
         </div>
 
+        <details class="more-repeat-options" {% if task["repeats"] and not (task.get("repetition_type") == "w" and task.get("repetition_subtype") == "w") %}open{% endif %}>
+        <summary>More repeat options</summary>
         <label for="repeats">Recurrent</label>
         <input type="checkbox" id="repeats" name="repeats" value="1"
             {% if task["repeats"] %}
@@ -162,6 +164,8 @@
 
         </div>
 
+        </details>
+
         <div id="colors-and-emojis">
             <label>How much energy will this take?</label><br/>
             <input type="hidden" value="{{ task.get("color", button_default_color_value) }}" id="color_custom" />
@@ -179,6 +183,19 @@
                 {% endfor %}
                 <br/>
             {% endif %}
+        </div>
+
+        <div class="simple-options">
+            <label class="check-option" for="repeat_weekly">
+                <input type="checkbox" id="repeat_weekly"
+                    {% if task.get("repetition_type") == "w" and task.get("repetition_subtype") == "w" %}checked="checked"{% endif %} />
+                Repeat every week on this day
+            </label>
+            <label class="check-option" for="locked">
+                <input type="checkbox" id="locked" name="locked" value="1"
+                    {% if task.get("locked") %}checked="checked"{% endif %} />
+                Locked: can't be moved or deleted by accident (for appointments, church, etc.)
+            </label>
         </div>
 
         <input class="form-button" type="submit" value="Save" />
@@ -232,7 +249,42 @@
         document.getElementById("subtype_weekly").disabled = false;
     };
 
+    // ---------- "Repeat every week" and "Locked" ----------
+    const startingDate = document.getElementById("date").value;
+    const wasWeekly = document.getElementById("repeat_weekly").checked;
+
+    function updateDeleteButton() {
+        const deleteButton = document.getElementById("delete-task");
+        if (!editing) {
+            return;
+        }
+        const isLocked = document.getElementById("locked").checked;
+        deleteButton.disabled = isLocked;
+        deleteButton.title = isLocked ? "Unlock this task to delete it" : "";
+    }
+
+    document.querySelector("form").addEventListener("submit", function() {
+        const weekly = document.getElementById("repeat_weekly").checked;
+        if (weekly) {
+            document.getElementById("repeats").checked = true;
+            document.getElementById("type_weekly").checked = true;
+            document.getElementById("subtype_weekly").checked = true;
+            // Keep the same weekday unless the date was changed
+            if (!(wasWeekly && document.getElementById("date").value === startingDate)) {
+                const parts = document.getElementById("date").value.split("-");
+                const chosenDay = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                document.getElementById("repetition_value").value = (chosenDay.getDay() + 6) % 7;
+            }
+        } else if (wasWeekly) {
+            // The weekly box was unticked: this becomes a one-time task on its date
+            document.getElementById("repeats").checked = false;
+        }
+    });
+
     window.onload = function() {
+        updateDeleteButton();
+        document.getElementById("locked").onchange = updateDeleteButton;
+
         document.getElementById("is_all_day").onclick = function(eventData) {
             if (eventData.target.checked === true) {
                 document.getElementById("start_time_block").className = "hidden";

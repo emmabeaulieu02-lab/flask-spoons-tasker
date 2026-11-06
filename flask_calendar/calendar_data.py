@@ -15,6 +15,8 @@ KEY_USERS = "users"
 KEY_NORMAL_TASK = "normal"
 KEY_REPETITIVE_TASK = "repetition"
 KEY_REPETITIVE_HIDDEN_TASK = "hidden_repetition"
+KEY_SETTINGS = "settings"
+KEY_LEARNED = "learned"
 
 
 class CalendarData:
@@ -217,7 +219,12 @@ class CalendarData:
         month_str: str,
         day_str: str,
         task_id: int,
-    ) -> None:
+        force: bool = False,
+    ) -> bool:
+        """Deletes a task. Returns False if the task is locked (locked tasks are kept unless force=True)."""
+        if not force and self.is_task_locked(calendar_id, year_str, month_str, day_str, task_id):
+            return False
+
         deleted = False
         data = self.load_calendar(calendar_id)
 
@@ -239,6 +246,76 @@ class CalendarData:
                         del data[KEY_TASKS][KEY_REPETITIVE_HIDDEN_TASK][str(task_id)]
 
         self._save_calendar(data, filename=calendar_id)
+        return True
+
+    def is_task_locked(self, calendar_id: str, year_str: str, month_str: str, day_str: str, task_id: int) -> bool:
+        data = self.load_calendar(calendar_id)
+        day_tasks = data[KEY_TASKS][KEY_NORMAL_TASK].get(year_str, {}).get(month_str, {}).get(day_str, [])
+        for task in day_tasks + data[KEY_TASKS][KEY_REPETITIVE_TASK]:
+            if task["id"] == task_id:
+                return bool(task.get("locked", False))
+        return False
+
+    @staticmethod
+    def _new_task_id(data: Dict) -> int:
+        """A task id that no other task uses (two tasks added in the same second used to share an id)."""
+        used_ids = {task["id"] for task in data[KEY_TASKS][KEY_REPETITIVE_TASK]}
+        for months in data[KEY_TASKS][KEY_NORMAL_TASK].values():
+            for days in months.values():
+                for day_tasks in days.values():
+                    used_ids.update(task["id"] for task in day_tasks)
+        new_id = int(time.time())
+        while new_id in used_ids:
+            new_id += 1
+        return new_id
+
+    def load_settings(self, data: Dict, defaults: Dict) -> Dict:
+        """Balance settings saved for this calendar, filled in with the defaults."""
+        settings = dict(defaults)
+        settings.update(data.get(KEY_SETTINGS, {}))
+        return settings
+
+    @staticmethod
+    def load_learned(data: Dict) -> Dict:
+        """What has been learned about when she likes to do each kind of task."""
+        return cast(Dict, data.get(KEY_LEARNED, {}))
+
+    def save_learned(self, calendar_id: str, learned: Dict) -> None:
+        data = self.load_calendar(calendar_id)
+        data[KEY_LEARNED] = learned
+        self._save_calendar(data, filename=calendar_id)
+
+    def move_tasks(self, calendar_id: str, moves: List[Dict]) -> int:
+        """
+        Moves several one-time tasks to a new day and time in one save.
+        Locked and repeating tasks are never moved. Returns how many tasks were moved.
+        """
+        data = self.load_calendar(calendar_id)
+        normal = data[KEY_TASKS][KEY_NORMAL_TASK]
+        moved = 0
+        for move in moves:
+            try:
+                from_year, from_month, from_day = [str(int(part)) for part in move["from_date"].split("-")]
+                to_year, to_month, to_day = [str(int(part)) for part in move["to_date"].split("-")]
+                task_id = int(move["task_id"])
+            except (KeyError, ValueError, AttributeError):
+                continue
+            day_tasks = normal.get(from_year, {}).get(from_month, {}).get(from_day, [])
+            for index, task in enumerate(day_tasks):
+                if task["id"] == task_id and not task.get("locked", False):
+                    task = day_tasks.pop(index)
+                    task["start_time"] = move["to_start"]
+                    task["end_time"] = move["to_end"]
+                    normal.setdefault(to_year, {}).setdefault(to_month, {}).setdefault(to_day, []).append(task)
+                    moved += 1
+                    break
+        self._save_calendar(data, filename=calendar_id)
+        return moved
+
+    def save_settings(self, calendar_id: str, settings: Dict) -> None:
+        data = self.load_calendar(calendar_id)
+        data[KEY_SETTINGS] = settings
+        self._save_calendar(data, filename=calendar_id)
 
     def update_task_day(
         self,
@@ -248,7 +325,11 @@ class CalendarData:
         day_str: str,
         task_id: int,
         new_day_str: str,
-    ) -> None:
+    ) -> bool:
+        """Moves a task to another day. Returns False if the task is locked."""
+        if self.is_task_locked(calendar_id, year_str, month_str, day_str, task_id):
+            return False
+
         data = self.load_calendar(calendar_id)
 
         task_to_update = None
@@ -257,13 +338,14 @@ class CalendarData:
                 task_to_update = data[KEY_TASKS][KEY_NORMAL_TASK][year_str][month_str][day_str].pop(index)
 
         if task_to_update is None:
-            return
+            return False
 
         if new_day_str not in data[KEY_TASKS][KEY_NORMAL_TASK][year_str][month_str]:
             data[KEY_TASKS][KEY_NORMAL_TASK][year_str][month_str][new_day_str] = []
         data[KEY_TASKS][KEY_NORMAL_TASK][year_str][month_str][new_day_str].append(task_to_update)
 
         self._save_calendar(data, filename=calendar_id)
+        return True
 
     def create_task(
         self,
@@ -281,12 +363,13 @@ class CalendarData:
         repetition_subtype: Optional[str],
         repetition_value: int,
         end_time: Optional[str] = None,
+        locked: bool = False,
     ) -> bool:
         details = details if len(details) > 0 else "&nbsp;"
         data = self.load_calendar(calendar_id)
 
         new_task = {
-            "id": int(time.time()),
+            "id": self._new_task_id(data),
             "color": color,
             "start_time": start_time,
             "end_time": end_time if end_time else start_time,
@@ -294,6 +377,8 @@ class CalendarData:
             "title": title,
             "details": details,
         }
+        if locked:
+            new_task["locked"] = True
         if has_repetition:
             if repetition_type == self.REPETITION_SUBTYPE_MONTH_DAY and repetition_value == 0:
                 return False

@@ -1,3 +1,4 @@
+import json
 import re
 from datetime import date, timedelta
 from typing import List, Optional, Tuple, cast  # noqa: F401
@@ -15,7 +16,12 @@ from flask_calendar.app_utils import (
     next_month_link,
     previous_month_link,
     parse_iso_date,
+    day_energy_check,
+    learned_summary,
     prepare_week_days,
+    record_placement,
+    suggest_week,
+    time_to_minutes,
     start_of_week,
 )
 from flask_calendar.authentication import Authentication
@@ -105,6 +111,24 @@ def main_calendar_action(calendar_id: str) -> Response:
     if not view_past_tasks:
         calendar_data.hide_past_tasks(year, month, tasks)
 
+    # Energy balance for each day of the month.
+    # A fresh copy of the data is used, because building the month view above adds the
+    # repeating tasks into `data` and they would otherwise be counted twice.
+    data = calendar_data.load_calendar(calendar_id)
+    energy_settings = calendar_data.load_settings(data, current_app.config["DEFAULT_ENERGY_SETTINGS"])
+    month_energy = {}
+    for month_day in GregorianCalendar.month_days(year, month):
+        if month_day.month != month:
+            continue
+        day_before = month_day - timedelta(days=1)
+        month_energy[month_day.day] = day_energy_check(
+            calendar_data.tasks_for_date(month_day, data),
+            calendar_data.tasks_for_date(day_before, data),
+            energy_settings,
+            current_app.config["ENERGY_LEVELS"],
+            current_app.config["ENERGY_POINTS"],
+        )
+
     if current_app.config["WEEK_STARTING_DAY"] == constants.WEEK_START_DAY_MONDAY:
         weekdays_headers = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     else:
@@ -128,6 +152,7 @@ def main_calendar_action(calendar_id: str) -> Response:
             tasks=tasks,
             display_view_past_button=current_app.config["SHOW_VIEW_PAST_BUTTON"],
             weekdays_headers=weekdays_headers,
+            month_energy=month_energy,
         ),
     )
 
@@ -190,6 +215,8 @@ def edit_task_action(calendar_id: str, year: int, month: int, day: int, task_id:
             task = calendar_data.repetitive_task_from_calendar(
                 calendar_id=calendar_id, year=year, month=month, task_id=int(task_id)
             )
+            # Show the date of the occurrence that was opened, not the 1st of the month
+            task["date"] = calendar_data.date_for_frontend(year, month, day)
         else:
             task = calendar_data.task_from_calendar(
                 calendar_id=calendar_id,
@@ -254,6 +281,7 @@ def update_task_action(calendar_id: str, year: str, month: str, day: str, task_i
     repetition_type = request.form.get("repetition_type", "")
     repetition_subtype = request.form.get("repetition_subtype", "")
     repetition_value = int(request.form["repetition_value"])  # type: int
+    locked = request.form.get("locked", "0") == "1"
 
     calendar_data.create_task(
         calendar_id=calendar_id,
@@ -270,15 +298,19 @@ def update_task_action(calendar_id: str, year: str, month: str, day: str, task_i
         repetition_type=repetition_type,
         repetition_subtype=repetition_subtype,
         repetition_value=repetition_value,
+        locked=locked,
     )
-    # For deletion of old task data use only url data
+    # For deletion of old task data use only url data (force: the old copy goes even if it was locked)
     calendar_data.delete_task(
         calendar_id=calendar_id,
         year_str=year,
         month_str=month,
         day_str=day,
         task_id=int(task_id),
+        force=True,
     )
+
+    learn_from_placement(calendar_id, color, start_date, start_time, is_all_day)
 
     if updated_year is None:
         return redirect("{}/{}/".format(current_app.config["BASE_URL"], calendar_id), code=302)
@@ -287,6 +319,23 @@ def update_task_action(calendar_id: str, year: str, month: str, day: str, task_i
             "{}/{}/?y={}&m={}".format(current_app.config["BASE_URL"], calendar_id, updated_year, updated_month),
             code=302,
         )
+
+
+def learn_from_placement(calendar_id: str, color: str, date_text: str, start_time: str, is_all_day: bool) -> None:
+    """Remembers when she chose to do this kind of task, so suggestions can follow her habits."""
+    level = current_app.config["ENERGY_LEVELS"].get((color or "").lower(), ("", ""))[0]
+    if not level or is_all_day or not date_text:
+        return
+    try:
+        chosen_day = date(*[int(part) for part in date_text.split("-")])
+        start_minutes = time_to_minutes(start_time)
+    except (ValueError, TypeError):
+        return
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    data = calendar_data.load_calendar(calendar_id)
+    learned = calendar_data.load_learned(data)
+    record_placement(learned, level, chosen_day, start_minutes)
+    calendar_data.save_learned(calendar_id, learned)
 
 
 @authenticated
@@ -312,6 +361,7 @@ def save_task_action(calendar_id: str) -> Response:
     repetition_type = request.form.get("repetition_type")
     repetition_subtype = request.form.get("repetition_subtype")
     repetition_value = int(request.form["repetition_value"])
+    locked = request.form.get("locked", "0") == "1"
 
     calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
 
@@ -352,7 +402,10 @@ def save_task_action(calendar_id: str) -> Response:
             repetition_type=repetition_type,
             repetition_subtype=repetition_subtype,
             repetition_value=repetition_value,
+            locked=locked,
         )
+
+    learn_from_placement(calendar_id, color, startdate, start_time, is_all_day)
 
     if year is None:
         return redirect("{}/{}/".format(current_app.config["BASE_URL"], calendar_id), code=302)
@@ -367,13 +420,15 @@ def save_task_action(calendar_id: str) -> Response:
 @authorized
 def delete_task_action(calendar_id: str, year: str, month: str, day: str, task_id: str) -> Response:
     calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
-    calendar_data.delete_task(
+    deleted = calendar_data.delete_task(
         calendar_id=calendar_id,
         year_str=year,
         month_str=month,
         day_str=day,
         task_id=int(task_id),
     )
+    if not deleted:
+        return cast(Response, make_response(jsonify({"error": "This task is locked. Unlock it first."}), 423))
 
     return cast(Response, jsonify({}))
 
@@ -384,7 +439,7 @@ def update_task_day_action(calendar_id: str, year: str, month: str, day: str, ta
     new_day = request.data.decode("utf-8")
 
     calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
-    calendar_data.update_task_day(
+    moved = calendar_data.update_task_day(
         calendar_id=calendar_id,
         year_str=year,
         month_str=month,
@@ -392,6 +447,8 @@ def update_task_day_action(calendar_id: str, year: str, month: str, day: str, ta
         task_id=int(task_id),
         new_day_str=new_day,
     )
+    if not moved:
+        return cast(Response, make_response(jsonify({"error": "This task is locked. Unlock it first."}), 423))
 
     return cast(Response, jsonify({}))
 
@@ -437,9 +494,10 @@ def weekly_calendar_action(calendar_id: str):
     )
     data = calendar_data.load_calendar(calendar_id)
     tasks = calendar_data.tasks_for_week(week_start, data)
+    energy_settings = calendar_data.load_settings(data, current_app.config["DEFAULT_ENERGY_SETTINGS"])
 
-    start_hour = current_app.config["WEEK_VIEW_START_HOUR"]
-    end_hour = current_app.config["WEEK_VIEW_END_HOUR"]
+    start_hour = int(energy_settings["day_start"])
+    end_hour = int(energy_settings["day_end"])
     hour_height = current_app.config["WEEK_VIEW_HOUR_HEIGHT"]
 
     week_days = prepare_week_days(
@@ -452,6 +510,36 @@ def weekly_calendar_action(calendar_id: str):
             "WEEK_VIEW_MIN_TASK_MINUTES"
         ],
     )
+
+    # Energy balance for each day (uses all of the day's tasks, even ones outside the visible hours)
+    previous_day_tasks = calendar_data.tasks_for_date(week_start - timedelta(days=1), data)
+    for week_day in week_days:
+        day_tasks = tasks.get(week_day["date_key"], [])
+        week_day["energy"] = day_energy_check(
+            day_tasks,
+            previous_day_tasks,
+            energy_settings,
+            current_app.config["ENERGY_LEVELS"],
+            current_app.config["ENERGY_POINTS"],
+        )
+        previous_day_tasks = day_tasks
+
+    # "Suggest a balanced week": a preview she can accept or ignore
+    suggestion = None
+    if request.args.get("suggest") == "1":
+        suggestion = suggest_week(
+            week_dates=[week_day["date"] for week_day in week_days],
+            tasks_by_date=tasks,
+            previous_day_tasks=calendar_data.tasks_for_date(week_start - timedelta(days=1), data),
+            settings=energy_settings,
+            energy_levels=current_app.config["ENERGY_LEVELS"],
+            energy_points=current_app.config["ENERGY_POINTS"],
+            learned=calendar_data.load_learned(data),
+            today=today,
+        )
+        for move in suggestion["moves"]:
+            move["top"] = (move["to_start_minutes"] - start_hour * 60) * hour_height / 60
+            move["height"] = move["length"] * hour_height / 60
 
     previous_week = week_start - timedelta(days=7)
     next_week = week_start + timedelta(days=7)
@@ -474,39 +562,90 @@ def weekly_calendar_action(calendar_id: str):
         grid_height=(end_hour - start_hour) * hour_height,
         activity_bank=current_app.config["ACTIVITY_BANK"],
         energy_levels=current_app.config["BUTTONS_COLORS_LIST"],
+        suggestion=suggestion,
+        suggestion_json=json.dumps(suggestion["moves"]) if suggestion else "[]",
+        applied=request.args.get("applied"),
     )
 
 @authenticated
 @authorized
 def settings_action(calendar_id: str):
-    """displays the settings page"""
-    today = date.today()
-
-    current_day, current_month, current_year = GregorianCalendar.current_date()
-    year = int(request.args.get("y", current_year))
-    year = max(min(year, current_app.config["MAX_YEAR"]), current_app.config["MIN_YEAR"])
-    month = int(request.args.get("m", current_month))
-    month = max(min(month, 12), 1)
-
-    selected_date = parse_iso_date(
-        request.args.get("date"),
-        default=today,
-    )
-
-    first_weekday = current_app.config["WEEK_STARTING_DAY"]
-    week_start = start_of_week(selected_date, first_weekday)
-    week_end = week_start + timedelta(days=6)
-
-    calendar_data = CalendarData(
-        data_folder=current_app.config["DATA_FOLDER"],
-        first_weekday=first_weekday,
-    )
+    """Shows the balance settings page."""
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
     data = calendar_data.load_calendar(calendar_id)
-    tasks = calendar_data.tasks_for_week(week_start, data)
-
-    previous_week = week_start - timedelta(days=7)
-    next_week = week_start + timedelta(days=7)
+    settings = calendar_data.load_settings(data, current_app.config["DEFAULT_ENERGY_SETTINGS"])
 
     return render_template(
         "settings.html",
+        calendar_id=calendar_id,
+        settings=settings,
+        energy_points=current_app.config["ENERGY_POINTS"],
+        saved=request.args.get("saved") == "1",
+        forgot=request.args.get("forgot") == "1",
+        learned=learned_summary(calendar_data.load_learned(data)),
+        hours=range(0, 24),
+    )
+
+
+@authenticated
+@authorized
+def save_settings_action(calendar_id: str) -> Response:
+    """Saves the balance settings, keeping every value within a sensible range."""
+    defaults = current_app.config["DEFAULT_ENERGY_SETTINGS"]
+
+    def number(name: str, minimum: float, maximum: float) -> float:
+        try:
+            value = float(request.form.get(name, defaults[name]))
+        except ValueError:
+            value = float(defaults[name])
+        return max(minimum, min(value, maximum))
+
+    day_start = int(number("day_start", 0, 22))
+    day_end = int(number("day_end", 1, 24))
+    if day_end <= day_start:
+        day_end = min(day_start + 1, 24)
+
+    red_time = request.form.get("red_time", "any")
+    if red_time not in ("any", "morning", "afternoon", "evening"):
+        red_time = "any"
+
+    settings = {
+        "daily_limit": number("daily_limit", 0.5, 50),
+        "max_red": int(number("max_red", 0, 10)),
+        "red_time": red_time,
+        "rest_after_red_day": request.form.get("rest_after_red_day") == "1",
+        "day_start": day_start,
+        "day_end": day_end,
+    }
+
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    calendar_data.save_settings(calendar_id, settings)
+
+    return redirect("{}/{}/settings/?saved=1".format(current_app.config["BASE_URL"], calendar_id), code=302)
+
+
+@authenticated
+@authorized
+def forget_learning_action(calendar_id: str) -> Response:
+    """Clears what the calendar has learned about her habits."""
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    calendar_data.save_learned(calendar_id, {})
+    return redirect("{}/{}/settings/?forgot=1".format(current_app.config["BASE_URL"], calendar_id), code=302)
+
+
+@authenticated
+@authorized
+def apply_suggestion_action(calendar_id: str) -> Response:
+    """Moves the tasks from a suggestion she accepted."""
+    try:
+        moves = json.loads(request.form.get("moves", "[]"))
+    except ValueError:
+        moves = []
+    if not isinstance(moves, list):
+        moves = []
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    moved = calendar_data.move_tasks(calendar_id, [move for move in moves if isinstance(move, dict)])
+    week = request.form.get("week", "")
+    return redirect(
+        "{}/{}/week/?date={}&applied={}".format(current_app.config["BASE_URL"], calendar_id, week, moved), code=302
     )

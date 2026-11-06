@@ -62,18 +62,38 @@ ENERGY_LEVELS = {
     "#ff4848": ("high", "High energy"),
 }
 
-# Activity bank shown on the week view: (name, energy colour, length in minutes).
+# Energy points for each level, used to check that a day is balanced
+ENERGY_POINTS = {
+    "low": 0.5,
+    "medium": 1,
+    "high": 3,
+}
+
+# Default balance settings. The client can change these on the Settings page.
+DEFAULT_ENERGY_SETTINGS = {
+    "daily_limit": 6,  # most energy points in one day
+    "max_red": 1,  # most red (high energy) tasks in one day
+    "red_time": "any",  # best time for red tasks: any, morning, afternoon or evening
+    "rest_after_red_day": False,  # warn when two days in a row both have red tasks
+    "day_start": WEEK_VIEW_START_HOUR,  # first hour shown in the week view
+    "day_end": WEEK_VIEW_END_HOUR,  # last hour shown in the week view
+}
+
+# Activity bank shown on the week view:
+# (name, energy colour, length in minutes, locked).
+# Locked activities can't be moved by accident (for example appointments).
 # Edit this list with the client to match her own activities and energy levels.
 ACTIVITY_BANK = (
-    ("Walk", "#3EB34F", 60),
-    ("Reading", "#3EB34F", 30),
-    ("Rest", "#3EB34F", 60),
-    ("Cooking", "#F2C81A", 60),
-    ("Laundry", "#F2C81A", 60),
-    ("Phone call", "#F2C81A", 30),
-    ("Medical appointment", "#FF4848", 60),
-    ("Grocery shopping", "#FF4848", 90),
-    ("Physiotherapy", "#FF4848", 60),
+    ("Walk", "#3EB34F", 60, False),
+    ("Reading", "#3EB34F", 30, False),
+    ("Rest", "#3EB34F", 60, False),
+    ("Cooking", "#F2C81A", 60, False),
+    ("Laundry", "#F2C81A", 60, False),
+    ("Phone call", "#F2C81A", 30, False),
+    ("Church", "#F2C81A", 90, True),
+    ("Medical appointment", "#FF4848", 60, True),
+    ("Grocery shopping", "#FF4848", 90, False),
+    ("Physiotherapy", "#FF4848", 60, True),
 )
 
 # percent of chance to do a GC-like sweep on save and clean empty and/or past hidden entries.

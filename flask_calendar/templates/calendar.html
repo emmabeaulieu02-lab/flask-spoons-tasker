@@ -66,9 +66,16 @@
                 {% endif %}
                 {{ day.day }}</span>
                 {% set day_tasks = tasks[day.month|string][day.day|string] if (day.month|string in tasks and day.day|string in tasks[day.month|string]) else [] %}
-                {% set red_count = day_tasks|map(attribute="color")|map("energy_level")|select("equalto", "high")|list|length %}
-                {% if day.month == month and red_count > 1 %}
-                    <div class="red-alert">&#9888; {{ red_count }} red (high energy) tasks</div>
+                {% if day.month == month and day.day in month_energy %}
+                    {% set energy = month_energy[day.day] %}
+                    {% if energy.points > 0 %}
+                        <div class="energy-total {% if energy.over %}energy-total-over{% endif %}">
+                            Energy {{ energy.points_text }} / {{ energy.limit_text }}
+                        </div>
+                    {% endif %}
+                    {% for warning in energy.warnings %}
+                        <div class="red-alert energy-warning">&#9888; {{ warning }}</div>
+                    {% endfor %}
                 {% endif %}
                 <ul class="tasks">
                     {% if day.month|string in tasks and day.day|string in tasks[day.month|string] %}
@@ -86,18 +93,22 @@
                                 data-month="{{ day.month }}"
                                 data-day="{{ day.day }}"
                                 data-id="{{ task["id"] }}"
-                                {% if "repetition_type" in task %}data-recurrent="1"{% endif %}>
+                                {% if "repetition_type" in task %}data-recurrent="1"{% endif %}
+                                {% if task.get("locked") %}data-locked="1"{% endif %}>
 
                                 {% if not task["is_all_day"] %}
                                     <span class="time">{{ task["start_time"] }}{% if task["start_time"] != task["end_time"] %} - {{ task["end_time"] }}{% endif %}</span>
                                 {% endif %}
                                 {% if task["color"]|energy_name %}
-                                    <span class="energy-tag">{{ (task["color"]|energy_name).split(" ")[0] }}</span>
+                                    <span class="energy-tag">{{ (task["color"]|energy_name).split(" ")[0] }}<span class="sr-only"> energy</span></span>
+                                {% endif %}
+                                {% if task.get("locked") %}
+                                    <span class="lock-tag" title="Locked"><span aria-hidden="true">&#128274;</span><span class="sr-only">Locked</span></span>
                                 {% endif %}
                                 {{ task["title"] }}
                                 <p class="accordion-hidden">
                                     {{ task["details"]|task_details_for_markup|safe }}
-                                    {% if day.month == month %}
+                                    {% if day.month == month and not task.get("locked") %}
                                         <a href="#"
                                             data-id="{{ task["id"] }}"
                                             data-year="{{ day.year }}"
@@ -105,7 +116,9 @@
                                             data-day="{{ day.day }}"
                                             data-title="{{ task["title"]|replace("\"","") }}"
                                             class="button smaller remove-task"
-                                            title="Remove task">x</a>
+                                            title="Remove task" aria-label="Remove task">x</a>
+                                    {% endif %}
+                                    {% if day.month == month %}
                                         {% if "repetition_type" in task %}
                                             <a href="#"
                                                 data-id="{{ task["id"] }}"
@@ -311,6 +324,11 @@
         }
     };
 
+    // A task in this month (tasks from other months are greyed out and can't be used)
+    function isActiveTask(element) {
+        return element.classList.contains("task") && !element.classList.contains("greyed");
+    }
+
     function resetMovingTimeout() {
         window.clearTimeout(movingTimeout);
         movingTimeout = undefined;
@@ -330,8 +348,8 @@
 
     if (!smallScreen) {
         document.getElementById("calendar").onmousedown = function(eventData) {
-            if (eventData.target.nodeName === "LI" && eventData.target.className === "task" &&
-                !eventData.target.hasAttribute("data-recurrent")) {
+            if (eventData.target.nodeName === "LI" && isActiveTask(eventData.target) &&
+                !eventData.target.hasAttribute("data-recurrent") && !eventData.target.hasAttribute("data-locked")) {
 
                 moving = true;
                 movingElement = eventData.target;
@@ -358,12 +376,12 @@
             return;
         }
 
-        if (eventData.target.nodeName === "LI" && eventData.target.className === "task") {
+        if (eventData.target.nodeName === "LI" && isActiveTask(eventData.target)) {
             // If is not "all day" there will be a span containing the time before the content
             ToggleDetails(eventData.target.children[eventData.target.children.length - 1]);
             return;
         } else if (eventData.target.nodeName === "SPAN" && eventData.target.parentNode.nodeName === "LI"
-                    && eventData.target.parentNode.className === "task") {
+                    && isActiveTask(eventData.target.parentNode)) {
             // If is not "all day" there will be a span containing the time before the content
             ToggleDetails(eventData.target.parentNode.children[eventData.target.parentNode.children.length - 1]);
             return;

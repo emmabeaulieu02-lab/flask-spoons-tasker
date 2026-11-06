@@ -21,6 +21,9 @@ from flask_calendar.actions import (
     update_task_day_action,
     weekly_calendar_action,
     settings_action,
+    save_settings_action,
+    forget_learning_action,
+    apply_suggestion_action,
 )
 from flask_calendar.app_utils import task_details_for_markup
 
@@ -104,6 +107,26 @@ def create_app(config_overrides: Optional[Dict] = None) -> Flask:
         "settings_action",
         settings_action,
         methods=["GET"],
+    )
+
+    app.add_url_rule(
+        "/<calendar_id>/settings/",
+        "save_settings_action",
+        save_settings_action,
+        methods=["POST"],
+    )
+
+    app.add_url_rule(
+        "/<calendar_id>/settings/forget-learning/",
+        "forget_learning_action",
+        forget_learning_action,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/<calendar_id>/week/apply-suggestion/",
+        "apply_suggestion_action",
+        apply_suggestion_action,
+        methods=["POST"],
     )
 
     app.jinja_env.filters["task_details_for_markup"] = task_details_for_markup

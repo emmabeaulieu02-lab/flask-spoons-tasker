@@ -55,7 +55,21 @@
         </a>
 
         <a
-            class="view-link"
+            class="view-link suggest-link"
+            href="{{ url_for('weekly_calendar_action', calendar_id=calendar_id, date=week_start.isoformat(), suggest=1) }}"
+        >
+            Suggest a balanced week
+        </a>
+
+        <a
+            class="view-link view-link-plain"
+            href="{{ url_for('settings_action', calendar_id=calendar_id) }}"
+        >
+            Settings
+        </a>
+
+        <a
+            class="view-link view-link-plain"
             href="{{ url_for(
                 'main_calendar_action',
                 calendar_id=calendar_id,
@@ -68,6 +82,53 @@
     </header>
 
     <main>
+    {% if applied is not none %}
+    <div class="save-message save-message-visible" role="status">
+        {% if applied == "1" %}Moved 1 task.{% else %}Moved {{ applied }} tasks.{% endif %}
+        Your week has been updated.
+    </div>
+    {% endif %}
+
+    {% if suggestion %}
+    <section class="suggestion-panel" aria-labelledby="suggestion-title">
+        {% if suggestion.moves %}
+        <h2 id="suggestion-title">Suggested changes for a balanced week</h2>
+        <p>
+            {% if suggestion.warnings_after < suggestion.warnings_before %}
+            These changes take your week from {{ suggestion.warnings_before }}
+            message{{ "" if suggestion.warnings_before == 1 else "s" }} to {{ suggestion.warnings_after }}.
+            {% else %}
+            These changes move tasks to times that usually suit you better.
+            {% endif %}
+            Nothing changes until you choose "Use these changes". Dashed boxes show the new spots.
+        </p>
+        <ul class="suggestion-list">
+            {% for move in suggestion.moves %}
+            <li>
+                <strong>{{ move.title }}</strong>:
+                {% if move.changed_day %}
+                from {{ move.from_day }} {{ move.from_start }} to <strong>{{ move.to_day }} {{ move.to_start }}</strong>,
+                {% else %}
+                from {{ move.from_start }} to <strong>{{ move.to_start }}</strong> on {{ move.to_day }},
+                {% endif %}
+                {{ move.reason }}.
+            </li>
+            {% endfor %}
+        </ul>
+        <form method="POST" action="{{ url_for('apply_suggestion_action', calendar_id=calendar_id) }}" class="suggestion-actions">
+            <input type="hidden" name="moves" value="{{ suggestion_json }}">
+            <input type="hidden" name="week" value="{{ week_start.isoformat() }}">
+            <button type="submit" class="place-button suggestion-accept">Use these changes</button>
+            <a class="place-button button-link" href="{{ url_for('weekly_calendar_action', calendar_id=calendar_id, date=week_start.isoformat()) }}">No thanks</a>
+        </form>
+        {% else %}
+        <h2 id="suggestion-title">Your week already looks balanced</h2>
+        <p>There is nothing to change. Locked and repeating tasks always stay where they are.</p>
+        <a class="place-button button-link" href="{{ url_for('weekly_calendar_action', calendar_id=calendar_id, date=week_start.isoformat()) }}">Close</a>
+        {% endif %}
+    </section>
+    {% endif %}
+
     <div class="week-scroll">
         <div
             class="week-view"
@@ -79,7 +140,7 @@
             <div class="week-corner"></div>
 
             {% for day in week_days %}
-            <div class="week-day-heading">
+            <div class="week-day-heading" data-date="{{ day.date_key }}">
                 <span class="week-day-name">
                     {{ day.date.strftime("%a") }}
                 </span>
@@ -94,10 +155,12 @@
                 >
                     {{ day.date.day }}
                 </span>
-                {% set red_count = (day.all_day_tasks + day.timed_tasks)|map(attribute="color")|map("energy_level")|select("equalto", "high")|list|length %}
-                {% if red_count > 1 %}
-                    <div class="red-alert">&#9888; {{ red_count }} red (high energy) tasks</div>
-                {% endif %}
+                <div class="energy-total {% if day.energy.over %}energy-total-over{% endif %}">
+                    Energy {{ day.energy.points_text }} / {{ day.energy.limit_text }}
+                </div>
+                {% for warning in day.energy.warnings %}
+                    <div class="red-alert energy-warning">&#9888; {{ warning }}</div>
+                {% endfor %}
             </div>
             {% endfor %}
 
@@ -109,18 +172,21 @@
                 <a
                     class="week-all-day-task {% if task['color']|energy_level %}energy-{{ task['color']|energy_level }}{% endif %}"
                     {% if not task['color']|energy_level %}style="background-color: {{ task['color'] }}; color: {{ task['color']|text_color_for }}"{% endif %}
-                    aria-label="{{ task['title'] }}, all day{% if task['color']|energy_name %}, {{ task['color']|energy_name }}{% endif %}"
                     href="{{ url_for(
                         'edit_task_action',
                         calendar_id=calendar_id,
                         year=day.date.year,
                         month=day.date.month,
                         day=day.date.day,
-                        task_id=task['id']
+                        task_id=task['id'],
+                        repeats=1 if task.get('repetition_type') else None
                     ) }}"
                 >
+                    {% if task.get('locked') %}
+                    <span class="lock-tag" title="Locked"><span aria-hidden="true">&#128274;</span><span class="sr-only">Locked:</span></span>
+                    {% endif %}
                     {% if task['color']|energy_name %}
-                    <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}</span>
+                    <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}<span class="sr-only"> energy</span></span>
                     {% endif %}
                     {{ task["title"] }}
                 </a>
@@ -155,6 +221,18 @@
                 ></div>
                 {% endfor %}
 
+                {% if suggestion %}
+                {% for move in suggestion.moves if move.to_date == day.date_key %}
+                <div
+                    class="suggest-ghost energy-ghost-{{ move.level }}"
+                    style="top: {{ move.top }}px; height: {{ move.height }}px;"
+                    aria-hidden="true"
+                >
+                    Suggested: {{ move.title }} {{ move.to_start }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
                 {% for task in day.timed_tasks %}
                 <a
                     class="week-task {% if task['color']|energy_level %}energy-{{ task['color']|energy_level }}{% endif %} {% if task['height'] < 50 %}week-task-short{% endif %}"
@@ -163,9 +241,8 @@
                         height: {{ task['height'] }}px;
                         {% if not task['color']|energy_level %}background-color: {{ task['color'] }}; color: {{ task['color']|text_color_for }};{% endif %}
                     "
-                    aria-label="{{ task['title'] }}, {{ task['start_time'] }} to {{ task['end_time'] }}{% if task['color']|energy_name %}, {{ task['color']|energy_name }}{% endif %}"
                     draggable="false"
-                    {% if not task.get('repetition_type') %}
+                    {% if not task.get('repetition_type') and not task.get('locked') %}
                     data-movable="1"
                     data-update-url="{{ url_for(
                         'update_task_action',
@@ -186,7 +263,8 @@
                         year=day.date.year,
                         month=day.date.month,
                         day=day.date.day,
-                        task_id=task['id']
+                        task_id=task['id'],
+                        repeats=1 if task.get('repetition_type') else None
                     ) }}"
                     title="
                         {{ task['start_time'] }}
@@ -204,8 +282,14 @@
                     </span>
 
                     <span class="week-task-title">
+                        {% if task.get('locked') %}
+                        <span class="lock-tag" title="Locked"><span aria-hidden="true">&#128274;</span><span class="sr-only">Locked:</span></span>
+                        {% endif %}
+                        {% if task.get('repetition_type') %}
+                        <span class="lock-tag" title="Repeats every week"><span aria-hidden="true">&#8635;</span><span class="sr-only">Every week:</span></span>
+                        {% endif %}
                         {% if task['color']|energy_name %}
-                        <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}</span>
+                        <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}<span class="sr-only"> energy</span></span>
                         {% endif %}
                         {{ task["title"] }}
                     </span>
@@ -230,12 +314,14 @@
         <p class="activity-bank-help">
             Drag an activity onto the calendar. Or tap an activity, then tap a time on the calendar
             or choose a day and time below. To move a task, slide it to a new time, or tap it to change it.
+            <span aria-hidden="true">&#128274;</span> = locked (can't be moved by accident),
+            <span aria-hidden="true">&#8635;</span> = repeats every week.
         </p>
         <div class="activity-bins">
             {% for level_color, level_label in energy_levels %}
             <div class="activity-bin energy-bin-{{ level_color|energy_level }}">
                 <h3 class="activity-bin-title">{{ level_label }}</h3>
-                {% for title, color, minutes in activity_bank if color == level_color %}
+                {% for title, color, minutes, locked in activity_bank if color == level_color %}
                 <button
                     type="button"
                     class="activity energy-{{ color|energy_level }}"
@@ -244,8 +330,11 @@
                     data-title="{{ title }}"
                     data-color="{{ color }}"
                     data-minutes="{{ minutes }}"
+                    data-locked="{{ '1' if locked else '0' }}"
                 >
+                    {% if locked %}<span aria-hidden="true">&#128274;</span>{% endif %}
                     {{ title }}
+                    {% if locked %}<span class="sr-only">(locked)</span>{% endif %}
                     <span class="activity-length">{{ minutes }} min</span>
                 </button>
                 {% endfor %}
@@ -269,6 +358,9 @@
                 {% endfor %}
                 {% endfor %}
             </select>
+            <label class="place-repeat">
+                <input type="checkbox" id="place-repeat"> Every week
+            </label>
             <button type="button" id="place-add" class="place-button">Add to calendar</button>
             <button type="button" id="place-cancel" class="place-button">Cancel</button>
         </div>
@@ -307,10 +399,24 @@
         // Show a calm confirmation after the page reloads
         try {
             var message = sessionStorage.getItem("energy-calendar-message");
+            var messageDate = sessionStorage.getItem("energy-calendar-date");
             if (message) {
+                // Add a gentle heads-up if that day is now unbalanced
+                var heading = document.querySelector('.week-day-heading[data-date="' + messageDate + '"]');
+                if (heading) {
+                    var dayWarnings = [];
+                    heading.querySelectorAll(".energy-warning").forEach(function (warning) {
+                        dayWarnings.push(warning.textContent.replace("\u26A0", "").trim());
+                    });
+                    if (dayWarnings.length) {
+                        message += " Heads up: " + dayWarnings.join(". ") + ".";
+                        saveMessage.classList.add("save-message-warning");
+                    }
+                }
                 saveMessage.textContent = message;
                 saveMessage.classList.add("save-message-visible");
                 sessionStorage.removeItem("energy-calendar-message");
+                sessionStorage.removeItem("energy-calendar-date");
             }
         } catch (error) {}
 
@@ -346,7 +452,14 @@
             return Math.max(startHour * 60, Math.min(start, endHour * 60 - 15));
         }
 
-        function placeActivity(activity, date, start) {
+        function weekdayIndex(isoDate) {
+            // 0 = Monday ... 6 = Sunday, the same numbering the server uses
+            var parts = isoDate.split("-");
+            var day = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            return (day.getDay() + 6) % 7;
+        }
+
+        function placeActivity(activity, date, start, everyWeek) {
             var end = Math.min(start + parseInt(activity.dataset.minutes, 10), 23 * 60 + 59);
 
             var form = new URLSearchParams();
@@ -357,10 +470,18 @@
             form.append("start_time", toTime(start));
             form.append("end_time", toTime(end));
             form.append("color", activity.dataset.color);
-            form.append("repeats", "0");
-            form.append("repetition_type", "");
-            form.append("repetition_subtype", "");
-            form.append("repetition_value", "0");
+            form.append("locked", activity.dataset.locked === "1" ? "1" : "0");
+            if (everyWeek) {
+                form.append("repeats", "1");
+                form.append("repetition_type", "w");
+                form.append("repetition_subtype", "w");
+                form.append("repetition_value", String(weekdayIndex(date)));
+            } else {
+                form.append("repeats", "0");
+                form.append("repetition_type", "");
+                form.append("repetition_subtype", "");
+                form.append("repetition_value", "0");
+            }
 
             fetch(saveUrl, {
                 method: "POST",
@@ -372,7 +493,9 @@
                 }
                 try {
                     sessionStorage.setItem("energy-calendar-message",
-                        "Added " + activity.dataset.title + " on " + dayName(date) + " at " + toTime(start) + ".");
+                        "Added " + activity.dataset.title + " on " + dayName(date) + " at " + toTime(start) +
+                        (everyWeek ? ", every week." : "."));
+                    sessionStorage.setItem("energy-calendar-date", date);
                 } catch (error) {}
                 window.location.reload();
             }).catch(function () {
@@ -415,7 +538,8 @@
                 if (!selected || event.target.closest(".week-task")) {
                     return;
                 }
-                placeActivity(selected, column.dataset.date, minutesFromPosition(column, event.clientY));
+                placeActivity(selected, column.dataset.date, minutesFromPosition(column, event.clientY),
+                    document.getElementById("place-repeat").checked);
             });
         });
 
@@ -465,6 +589,7 @@
                 try {
                     sessionStorage.setItem("energy-calendar-message",
                         "Moved " + task.dataset.title + " to " + dayName(date) + " at " + toTime(start) + ".");
+                    sessionStorage.setItem("energy-calendar-date", date);
                 } catch (error) {}
                 window.location.reload();
             }).catch(function () {
@@ -549,7 +674,8 @@
 
         document.getElementById("place-add").addEventListener("click", function () {
             if (selected) {
-                placeActivity(selected, daySelect.value, parseInt(timeSelect.value, 10));
+                placeActivity(selected, daySelect.value, parseInt(timeSelect.value, 10),
+                    document.getElementById("place-repeat").checked);
             }
         });
 
