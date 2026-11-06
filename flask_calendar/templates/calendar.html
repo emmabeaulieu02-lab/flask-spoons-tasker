@@ -64,6 +64,11 @@
                         <span class="daynumber">
                 {% endif %}
                 {{ day.day }}</span>
+                {% set day_tasks = tasks[day.month|string][day.day|string] if (day.month|string in tasks and day.day|string in tasks[day.month|string]) else [] %}
+                {% set red_count = day_tasks|map(attribute="color")|map("lower")|select("equalto", "#ff4848")|list|length %}
+                {% if day.month == month and red_count > 1 %}
+                    <div class="red-alert" role="alert">&#9888; {{ red_count }} red tasks</div>
+                {% endif %}
                 <ul class="tasks">
                     {% if day.month|string in tasks and day.day|string in tasks[day.month|string] %}
                         {% for task in tasks[day.month|string][day.day|string]|sort(attribute="start_time") %}

@@ -499,3 +499,15 @@ ul.tasks li:not(.greyed),
 .week-task-details a {
     color: #000 !important;
 }
+
+/* Warning shown on days with more than one red (high energy) task */
+.red-alert {
+    background-color: #FFF3CD;
+    border: 2px solid #FF4848;
+    border-radius: 6px;
+    color: #000;
+    font-size: 0.9em;
+    font-weight: 700;
+    margin: 2px 0;
+    padding: 2px 6px;
+}

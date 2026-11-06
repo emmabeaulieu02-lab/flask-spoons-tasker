@@ -91,6 +91,10 @@
                 >
                     {{ day.date.day }}
                 </span>
+                {% set red_count = (day.all_day_tasks + day.timed_tasks)|map(attribute="color")|map("lower")|select("equalto", "#ff4848")|list|length %}
+                {% if red_count > 1 %}
+                    <div class="red-alert" role="alert">&#9888; {{ red_count }} red tasks</div>
+                {% endif %}
             </div>
             {% endfor %}
 
