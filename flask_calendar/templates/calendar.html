@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Calendar</title>
+    <title>{{ month_name }} {{ year }} - Energy Calendar</title>
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for("static", filename="") }}favicon_{{ current_day }}.png" id="favicon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,16 +11,16 @@
 
     <div id="statusbar" class="">Processing...</div>
 
-    <div class="header">
+    <header class="header">
         <input type="button" class="header-button" value="+"
-            onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" />
+            onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" aria-label="New task" />
         <input type="button" class="header-button" value="&lt;" onclick="window.location='{{ previous_month_link }}'"
-            title="Previous month" />
+            title="Previous month" aria-label="Previous month" />
         <input type="button" class="header-button" value="&gt;" onclick="window.location='{{ next_month_link }}'"
-            title="Next month" />
-        <div class="current-date">
+            title="Next month" aria-label="Next month" />
+        <h1 class="current-date">
             {{ month_name }} {{ year }}
-        </div>
+        </h1>
         <a
             class="view-link"
             href="{{ url_for(
@@ -38,8 +38,9 @@
             <input id="toggle-past-events" class="toggle-past-events" type="button" value="View Past" onclick="ToggleViewPastTasks();" />
         {% endif %}
          <input id="enter-settings" class="enter-settings" type="button" value="Settings" onclick="window.location='/{{ calendar_id }}/settings'" />
-    </div>
+    </header>
 
+    <main>
     <ul class="calendar-header">
         {% for weekday_header in weekdays_headers %}
             <li class="weekday-header">{{ weekday_header }}</li>
@@ -65,9 +66,9 @@
                 {% endif %}
                 {{ day.day }}</span>
                 {% set day_tasks = tasks[day.month|string][day.day|string] if (day.month|string in tasks and day.day|string in tasks[day.month|string]) else [] %}
-                {% set red_count = day_tasks|map(attribute="color")|map("lower")|select("equalto", "#ff4848")|list|length %}
+                {% set red_count = day_tasks|map(attribute="color")|map("energy_level")|select("equalto", "high")|list|length %}
                 {% if day.month == month and red_count > 1 %}
-                    <div class="red-alert" role="alert">&#9888; {{ red_count }} red tasks</div>
+                    <div class="red-alert">&#9888; {{ red_count }} red (high energy) tasks</div>
                 {% endif %}
                 <ul class="tasks">
                     {% if day.month|string in tasks and day.day|string in tasks[day.month|string] %}
@@ -75,9 +76,11 @@
                             <li
                                 {% if day.month != month %}
                                     class="task greyed"
+                                {% elif task["color"]|energy_level %}
+                                    class="task energy-{{ task["color"]|energy_level }}"
                                 {% else %}
                                     class="task"
-                                    style="background-color:{{ task["color"] }}"
+                                    style="background-color:{{ task["color"] }}; color:{{ task["color"]|text_color_for }}"
                                 {% endif %}
                                 data-year="{{ day.year }}"
                                 data-month="{{ day.month }}"
@@ -87,6 +90,9 @@
 
                                 {% if not task["is_all_day"] %}
                                     <span class="time">{{ task["start_time"] }}{% if task["start_time"] != task["end_time"] %} - {{ task["end_time"] }}{% endif %}</span>
+                                {% endif %}
+                                {% if task["color"]|energy_name %}
+                                    <span class="energy-tag">{{ (task["color"]|energy_name).split(" ")[0] }}</span>
                                 {% endif %}
                                 {{ task["title"] }}
                                 <p class="accordion-hidden">
@@ -125,6 +131,7 @@
             </li>
         {% endfor %}
     </ul>
+    </main>
 
 <script type="text/javascript">
     var smallScreen = (Math.min(document.documentElement.clientWidth, window.innerWidth || 0) <= 650),

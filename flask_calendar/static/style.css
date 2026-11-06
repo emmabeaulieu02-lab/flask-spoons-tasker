@@ -497,7 +497,7 @@ ul.tasks li:not(.greyed),
 .week-all-day-task,
 .week-task,
 .week-task-details a {
-    color: #000 !important;
+    color: #1F1F1F;
 }
 
 /* Warning shown on days with more than one red (high energy) task */
@@ -709,4 +709,331 @@ ul.tasks li:not(.greyed),
     .activity-bin {
         flex: 1 1 100%;
     }
+}
+
+/* ======================================================================
+   Accessibility (WCAG 2.1 AA, as required by CAN/ASC-EN 301 549)
+   plus calm, low-glare choices for people recovering from concussions
+   ====================================================================== */
+
+/* Calm, readable base: warm off-white (less glare than pure white),
+   soft dark text, a highly legible font and generous line spacing */
+body {
+    background-color: #F7F4EE;
+    color: #2B2B2B;
+    font-family: "Atkinson Hyperlegible", Verdana, Tahoma, sans-serif;
+    line-height: 1.5;
+}
+
+h1.current-date {
+    display: inline;
+    font-size: 1.5em;
+    line-height: 1.3;
+    margin: 0;
+}
+
+/* No sudden movement anywhere */
+* {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+}
+
+/* Clear keyboard focus ring */
+:focus-visible {
+    outline: 3px solid #1A4FA0;
+    outline-offset: 2px;
+}
+
+/* Screen-reader-only helper */
+.sr-only {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+}
+
+/* Softer energy colours: same green / yellow / red, less intense.
+   Dark text on all of them, plus a darker edge so blocks stand out. */
+.energy-low {
+    background-color: #7FC98F !important;
+    border-color: #1F6F33 !important;
+    color: #1F1F1F !important;
+}
+
+.energy-medium {
+    background-color: #F3D46B !important;
+    border-color: #8A6A00 !important;
+    color: #1F1F1F !important;
+}
+
+.energy-high {
+    background-color: #F09A9A !important;
+    border-color: #A32020 !important;
+    color: #1F1F1F !important;
+}
+
+ul.tasks li.energy-low,
+ul.tasks li.energy-medium,
+ul.tasks li.energy-high,
+.week-task.energy-low,
+.week-task.energy-medium,
+.week-task.energy-high,
+.week-all-day-task.energy-low,
+.week-all-day-task.energy-medium,
+.week-all-day-task.energy-high {
+    border-left: 5px solid;
+}
+
+/* The energy word on every task, so colour is never the only clue */
+.energy-tag {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    display: inline-block;
+    font-size: 0.8em;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-right: 4px;
+    padding: 0 4px;
+}
+
+/* ---------- Month view: bigger, darker text ---------- */
+.weekday-header {
+    color: #444;
+    font-size: 14px;
+}
+
+.day {
+    background-color: #FBFAF6;
+}
+
+.othermonth {
+    background-color: #EFECE5;
+}
+
+span.daynumber {
+    color: #3A3A3A;
+    font-size: 16px;
+}
+
+.othermonth span.daynumber {
+    color: #555;
+}
+
+span.daynumber-current {
+    background-color: #7FC98F;
+    border: 2px solid #1F6F33;
+    color: #1F1F1F;
+    font-size: 16px;
+}
+
+span.time {
+    font-size: 12px;
+}
+
+ul.tasks li {
+    color: #1F1F1F;
+    font-size: 15px;
+    margin-bottom: 3px;
+    padding: 2px 4px;
+}
+
+.task.greyed {
+    background-color: #E2DED6 !important;
+    color: #444 !important;
+}
+
+.remove-task,
+.hide-recurrent-task,
+.recurrent-task,
+.edit-task {
+    color: #1F1F1F;
+    min-height: 24px;
+    min-width: 24px;
+}
+
+.remove-task { background-color: #F09A9A; }
+.hide-recurrent-task { background-color: #C9CED6; }
+.recurrent-task { background-color: #A8DED9; }
+.edit-task { background-color: #A9D6BC; }
+
+/* ---------- Week view: bigger, darker text ---------- */
+.week-corner,
+.week-day-heading,
+.all-day-label,
+.all-day-column {
+    background: #F1EEE7;
+}
+
+.week-day-column {
+    background-color: #FDFCF9;
+}
+
+.week-day-name,
+.all-day-label,
+.time-label {
+    color: #444;
+    font-size: 13px;
+}
+
+.week-day-number-current {
+    background: #7FC98F;
+    border: 2px solid #1F6F33;
+    color: #1F1F1F;
+}
+
+.week-task,
+.week-all-day-task {
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.week-task-time {
+    font-size: 13px;
+}
+
+.week-task-title {
+    font-size: 14px;
+}
+
+.week-task-details {
+    font-size: 13px;
+}
+
+/* Short tasks: show just the name so nothing gets cut off */
+.week-task-short .week-task-time,
+.week-task-short .week-task-details {
+    display: none;
+}
+
+/* ---------- Red-task alert: clear but not alarming ---------- */
+.red-alert {
+    background-color: #FBE3E3;
+    border: 2px solid #A32020;
+    color: #1F1F1F;
+}
+
+/* ---------- Activity bank ---------- */
+.activity-bank {
+    background: #F7F4EE;
+}
+
+.activity-bank-title {
+    font-size: 1.2em;
+    margin: 4px 0 0 0;
+}
+
+.activity-bin {
+    background: #FDFCF9;
+    border-width: 3px;
+}
+
+.energy-bin-low { border-color: #1F6F33; }
+.energy-bin-medium { border-color: #8A6A00; }
+.energy-bin-high { border-color: #A32020; }
+
+.activity {
+    border: 2px solid;
+    color: #1F1F1F;
+    font-family: inherit;
+}
+
+.activity-selected,
+.activity[aria-pressed="true"] {
+    border-width: 4px;
+    box-shadow: 0 0 0 3px #FDFCF9, 0 0 0 6px #1F1F1F;
+}
+
+.drop-target,
+.placing-activity .week-day-column:hover {
+    background-color: #E6EEF8;
+}
+
+/* Choose-a-day-and-time panel (keyboard and single-tap alternative to dragging) */
+.place-panel {
+    align-items: center;
+    background: #FDFCF9;
+    border: 2px solid #1A4FA0;
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-top: 10px;
+    padding: 10px;
+}
+
+.place-panel[hidden] {
+    display: none;
+}
+
+.place-selected {
+    flex-basis: 100%;
+    font-weight: 700;
+    margin: 0;
+}
+
+.place-panel label {
+    font-weight: 700;
+}
+
+.place-panel select,
+.place-button {
+    font-family: inherit;
+    font-size: 1rem;
+    min-height: 44px;
+    padding: 4px 10px;
+}
+
+/* Confirmation after adding an activity */
+.save-message {
+    display: none;
+}
+
+.save-message-visible {
+    background: #E7F3EA;
+    border: 2px solid #1F6F33;
+    border-radius: 8px;
+    color: #1F1F1F;
+    display: block;
+    margin: 6px 12px;
+    padding: 8px 12px;
+}
+
+/* Form controls use the same readable font */
+input,
+select,
+button {
+    font-family: inherit;
+}
+
+.task-page-title,
+.task-details-form h1 {
+    font-size: 1.5em;
+    margin: 12px auto 0 auto;
+    max-width: 640px;
+    padding: 0 12px;
+}
+
+.task-details-form h1 {
+    padding: 0;
+}
+
+.week-task-title,
+.week-task-time {
+    color: inherit;
+}
+
+/* Tasks that can be moved: show a grab cursor, and lift the task while it moves */
+.week-task[data-movable] {
+    cursor: grab;
+    touch-action: none;
+}
+
+.week-task-moving {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    cursor: grabbing;
+    opacity: 0.9;
+    z-index: 20;
 }

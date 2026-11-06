@@ -54,6 +54,14 @@ BUTTONS_COLORS_LIST = (
     ("#FF4848", "Red - high energy"),
 )
 
+# Energy level of each task colour: colour code -> (CSS name, words shown on screen).
+# Tasks show these words as well as the colour, so colour is never the only clue.
+ENERGY_LEVELS = {
+    "#3eb34f": ("low", "Low energy"),
+    "#f2c81a": ("medium", "Medium energy"),
+    "#ff4848": ("high", "High energy"),
+}
+
 # Activity bank shown on the week view: (name, energy colour, length in minutes).
 # Edit this list with the client to match her own activities and energy levels.
 ACTIVITY_BANK = (

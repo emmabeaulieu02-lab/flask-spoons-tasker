@@ -14,7 +14,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-
+<main>
+    <h1 class="task-page-title">{% if editing %}Edit task{% else %}New task{% endif %}</h1>
     {% if editing %}
         <form autocomplete="off" method="POST"
             action="{{ base_url }}/{{ calendar_id }}/{{ year }}/{{ month }}/{{ day }}/task/{{ task.get("id") }}">
@@ -23,7 +24,7 @@
     {% endif %}
     <div id="task-details-form" class="task-details-form">
 
-        <label for="text">Title</label>
+        <label for="title">Title</label>
         <input type="text" autocomplete="off" tabindex="0" placeholder="Title" value="{{ task.get("title", "") }}"
             id="title" name="title" minlength="2" required />
         <br/>
@@ -165,8 +166,9 @@
             <label>How much energy will this take?</label><br/>
             <input type="hidden" value="{{ task.get("color", button_default_color_value) }}" id="color_custom" />
             {% for color, label in buttons_colors %}
-                <input class="form-button color" type="button" value="{{ label }}" data-color="{{ color }}"
-                    style="background-color:{{ color }}; color:#000; font-size:1.2em; padding:12px 20px; margin:6px; border-radius:8px; border:4px solid {{ 'black' if task.get('color', button_default_color_value) == color else 'transparent' }};" />
+                <input class="form-button color energy-{{ color|energy_level }}" type="button" value="{{ label }}" data-color="{{ color }}"
+                    aria-pressed="{{ 'true' if task.get('color', button_default_color_value) == color else 'false' }}"
+                    style="font-size:1.2em; padding:12px 20px; margin:6px; border-radius:8px; border:4px solid {{ '#1F1F1F' if task.get('color', button_default_color_value) == color else 'transparent' }};" />
             {% endfor %}
             <input type="hidden" value="{{ task.get("color", button_default_color_value) }}" id="color" name="color" />
             <br/>
@@ -186,6 +188,7 @@
         <input class="form-button" type="button" value="Cancel" onclick="window.history.go(-1); return false;" />
     </div>
     </form>
+</main>
 
 <script type="text/javascript">
     const editing = {% if editing %}true{% else %}false{% endif %};
@@ -304,14 +307,16 @@
 
         document.getElementById("colors-and-emojis").onclick = function(eventData) {
             if (eventData.target.nodeName === "INPUT") {
-                switch (eventData.target.className) {
+                switch (eventData.target.classList.contains("color") ? "form-button color" : eventData.target.className) {
                     case "form-button color":
                         document.getElementById("color").value = eventData.target.getAttribute("data-color");
                         document.getElementById("color_custom").value = eventData.target.getAttribute("data-color");
                         document.querySelectorAll(".form-button.color").forEach(function(button) {
                             button.style.borderColor = "transparent";
+                            button.setAttribute("aria-pressed", "false");
                         });
-                        eventData.target.style.borderColor = "black";
+                        eventData.target.style.borderColor = "#1F1F1F";
+                        eventData.target.setAttribute("aria-pressed", "true");
                         return false;
                         break;
                     case "form-button emoji":

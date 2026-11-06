@@ -1,6 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Calendar</title>
+    <title>Week of {{ week_start.strftime("%B") }} {{ week_start.day }} - Energy Calendar</title>
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for("static", filename="") }}favicon_{{ current_day }}.png" id="favicon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +12,7 @@
 
     <header class="header week-header">
          <input type="button" class="header-button" value="+"
-            onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" />
+            onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" aria-label="New task" />
 
         <a
             class="button header-button"
@@ -24,11 +26,11 @@
             &lsaquo;
         </a>
 
-        <span class="current-date">
-               {{ week_start.strftime("%B") }} {{ week_start.day }}
+        <h1 class="current-date">
+            {{ week_start.strftime("%B") }} {{ week_start.day }}
             &ndash;
-               {{ week_end.strftime("%B") }} {{ week_end.day }}, {{ week_end.year }}
-        </span>
+            {{ week_end.strftime("%B") }} {{ week_end.day }}, {{ week_end.year }}
+        </h1>
 
         <a
             class="button header-button"
@@ -65,6 +67,7 @@
         </a>
     </header>
 
+    <main>
     <div class="week-scroll">
         <div
             class="week-view"
@@ -91,9 +94,9 @@
                 >
                     {{ day.date.day }}
                 </span>
-                {% set red_count = (day.all_day_tasks + day.timed_tasks)|map(attribute="color")|map("lower")|select("equalto", "#ff4848")|list|length %}
+                {% set red_count = (day.all_day_tasks + day.timed_tasks)|map(attribute="color")|map("energy_level")|select("equalto", "high")|list|length %}
                 {% if red_count > 1 %}
-                    <div class="red-alert" role="alert">&#9888; {{ red_count }} red tasks</div>
+                    <div class="red-alert">&#9888; {{ red_count }} red (high energy) tasks</div>
                 {% endif %}
             </div>
             {% endfor %}
@@ -104,8 +107,9 @@
             <div class="all-day-column">
                 {% for task in day.all_day_tasks %}
                 <a
-                    class="week-all-day-task"
-                    style="background-color: {{ task['color'] }}"
+                    class="week-all-day-task {% if task['color']|energy_level %}energy-{{ task['color']|energy_level }}{% endif %}"
+                    {% if not task['color']|energy_level %}style="background-color: {{ task['color'] }}; color: {{ task['color']|text_color_for }}"{% endif %}
+                    aria-label="{{ task['title'] }}, all day{% if task['color']|energy_name %}, {{ task['color']|energy_name }}{% endif %}"
                     href="{{ url_for(
                         'edit_task_action',
                         calendar_id=calendar_id,
@@ -115,6 +119,9 @@
                         task_id=task['id']
                     ) }}"
                 >
+                    {% if task['color']|energy_name %}
+                    <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}</span>
+                    {% endif %}
                     {{ task["title"] }}
                 </a>
                 {% endfor %}
@@ -150,12 +157,29 @@
 
                 {% for task in day.timed_tasks %}
                 <a
-                    class="week-task"
+                    class="week-task {% if task['color']|energy_level %}energy-{{ task['color']|energy_level }}{% endif %} {% if task['height'] < 50 %}week-task-short{% endif %}"
                     style="
                         top: {{ task['top'] }}px;
                         height: {{ task['height'] }}px;
-                        background-color: {{ task['color'] }};
+                        {% if not task['color']|energy_level %}background-color: {{ task['color'] }}; color: {{ task['color']|text_color_for }};{% endif %}
                     "
+                    aria-label="{{ task['title'] }}, {{ task['start_time'] }} to {{ task['end_time'] }}{% if task['color']|energy_name %}, {{ task['color']|energy_name }}{% endif %}"
+                    draggable="false"
+                    {% if not task.get('repetition_type') %}
+                    data-movable="1"
+                    data-update-url="{{ url_for(
+                        'update_task_action',
+                        calendar_id=calendar_id,
+                        year=day.date.year,
+                        month=day.date.month,
+                        day=day.date.day,
+                        task_id=task['id']
+                    ) }}"
+                    data-title="{{ task['title'] }}"
+                    data-color="{{ task['color'] }}"
+                    data-start="{{ task['start_time'] }}"
+                    data-end="{{ task['end_time'] }}"
+                    {% endif %}
                     href="{{ url_for(
                         'edit_task_action',
                         calendar_id=calendar_id,
@@ -180,6 +204,9 @@
                     </span>
 
                     <span class="week-task-title">
+                        {% if task['color']|energy_name %}
+                        <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}</span>
+                        {% endif %}
                         {{ task["title"] }}
                     </span>
 
@@ -196,24 +223,27 @@
             {% endfor %}
         </div>
     </div>
-    <section class="activity-bank" aria-label="Activity bank">
+    <div id="save-message" class="save-message" role="status" aria-live="polite"></div>
+
+    <section class="activity-bank" aria-labelledby="activity-bank-title">
+        <h2 id="activity-bank-title" class="activity-bank-title">Activities</h2>
         <p class="activity-bank-help">
-            Drag an activity onto the calendar, or tap an activity and then tap a time.
+            Drag an activity onto the calendar. Or tap an activity, then tap a time on the calendar
+            or choose a day and time below. To move a task, slide it to a new time, or tap it to change it.
         </p>
         <div class="activity-bins">
             {% for level_color, level_label in energy_levels %}
-            <div class="activity-bin" style="border-color: {{ level_color }}">
-                <h2 class="activity-bin-title">{{ level_label }}</h2>
+            <div class="activity-bin energy-bin-{{ level_color|energy_level }}">
+                <h3 class="activity-bin-title">{{ level_label }}</h3>
                 {% for title, color, minutes in activity_bank if color == level_color %}
                 <button
                     type="button"
-                    class="activity"
+                    class="activity energy-{{ color|energy_level }}"
                     draggable="true"
                     aria-pressed="false"
                     data-title="{{ title }}"
                     data-color="{{ color }}"
                     data-minutes="{{ minutes }}"
-                    style="background-color: {{ color }}"
                 >
                     {{ title }}
                     <span class="activity-length">{{ minutes }} min</span>
@@ -222,7 +252,28 @@
             </div>
             {% endfor %}
         </div>
+
+        <div id="place-panel" class="place-panel" hidden>
+            <p id="place-selected" class="place-selected"></p>
+            <label for="place-day">Day</label>
+            <select id="place-day">
+                {% for day in week_days %}
+                <option value="{{ day.date_key }}">{{ day.date.strftime("%A, %B") }} {{ day.date.day }}</option>
+                {% endfor %}
+            </select>
+            <label for="place-time">Time</label>
+            <select id="place-time">
+                {% for hour in hours %}
+                {% for minute in [0, 15, 30, 45] %}
+                <option value="{{ hour * 60 + minute }}">{{ "%02d:%02d"|format(hour, minute) }}</option>
+                {% endfor %}
+                {% endfor %}
+            </select>
+            <button type="button" id="place-add" class="place-button">Add to calendar</button>
+            <button type="button" id="place-cancel" class="place-button">Cancel</button>
+        </div>
     </section>
+    </main>
 
     <script>
     (function () {
@@ -232,6 +283,11 @@
         var saveUrl = "{{ url_for('save_task_action', calendar_id=calendar_id) }}";
         var activities = document.querySelectorAll(".activity");
         var columns = document.querySelectorAll(".week-day-column");
+        var panel = document.getElementById("place-panel");
+        var panelText = document.getElementById("place-selected");
+        var daySelect = document.getElementById("place-day");
+        var timeSelect = document.getElementById("place-time");
+        var saveMessage = document.getElementById("save-message");
         var selected = null;
         var dragged = null;
 
@@ -243,29 +299,55 @@
             return pad(Math.floor(totalMinutes / 60)) + ":" + pad(totalMinutes % 60);
         }
 
-        function selectActivity(button) {
+        function dayName(isoDate) {
+            var option = daySelect.querySelector('option[value="' + isoDate + '"]');
+            return option ? option.textContent : isoDate;
+        }
+
+        // Show a calm confirmation after the page reloads
+        try {
+            var message = sessionStorage.getItem("energy-calendar-message");
+            if (message) {
+                saveMessage.textContent = message;
+                saveMessage.classList.add("save-message-visible");
+                sessionStorage.removeItem("energy-calendar-message");
+            }
+        } catch (error) {}
+
+        function clearSelection() {
+            selected = null;
             activities.forEach(function (other) {
                 other.classList.remove("activity-selected");
                 other.setAttribute("aria-pressed", "false");
             });
+            document.body.classList.remove("placing-activity");
+            panel.hidden = true;
+        }
+
+        function selectActivity(button) {
             if (selected === button) {
-                selected = null;
-                document.body.classList.remove("placing-activity");
+                clearSelection();
                 return;
             }
+            clearSelection();
             selected = button;
             button.classList.add("activity-selected");
             button.setAttribute("aria-pressed", "true");
             document.body.classList.add("placing-activity");
+            panelText.textContent = "Selected: " + button.dataset.title + " (" + button.dataset.minutes +
+                " min). Tap a time on the calendar, or choose a day and time:";
+            panel.hidden = false;
         }
 
-        function placeActivity(activity, column, clientY) {
-            // Work out the time from where the activity was dropped, rounded to 15 minutes
+        function minutesFromPosition(column, clientY) {
+            // Work out the time from where the activity was placed, rounded to 15 minutes
             var offsetY = clientY - column.getBoundingClientRect().top;
             var start = startHour * 60 + Math.round((offsetY / hourHeight) * 4) * 15;
-            start = Math.max(startHour * 60, Math.min(start, endHour * 60 - 15));
+            return Math.max(startHour * 60, Math.min(start, endHour * 60 - 15));
+        }
+
+        function placeActivity(activity, date, start) {
             var end = Math.min(start + parseInt(activity.dataset.minutes, 10), 23 * 60 + 59);
-            var date = column.dataset.date;
 
             var form = new URLSearchParams();
             form.append("title", activity.dataset.title);
@@ -284,10 +366,18 @@
                 method: "POST",
                 body: form,
                 credentials: "same-origin"
-            }).then(function () {
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error("save failed");
+                }
+                try {
+                    sessionStorage.setItem("energy-calendar-message",
+                        "Added " + activity.dataset.title + " on " + dayName(date) + " at " + toTime(start) + ".");
+                } catch (error) {}
                 window.location.reload();
             }).catch(function () {
-                alert("Sorry, the activity could not be saved. Please try again.");
+                saveMessage.textContent = "Sorry, the activity could not be saved. Please try again.";
+                saveMessage.classList.add("save-message-visible");
             });
         }
 
@@ -318,16 +408,159 @@
                 event.preventDefault();
                 column.classList.remove("drop-target");
                 if (dragged) {
-                    placeActivity(dragged, column, event.clientY);
+                    placeActivity(dragged, column.dataset.date, minutesFromPosition(column, event.clientY));
                 }
             });
             column.addEventListener("click", function (event) {
                 if (!selected || event.target.closest(".week-task")) {
                     return;
                 }
-                placeActivity(selected, column, event.clientY);
+                placeActivity(selected, column.dataset.date, minutesFromPosition(column, event.clientY));
             });
+        });
+
+        // ---------- Moving tasks that are already on the calendar ----------
+        // Works with a mouse, a finger or a pen: press on a task and slide it.
+        // A simple tap still opens the task, where the day and time can also be changed.
+        function timeToMinutes(value) {
+            var parts = value.split(":");
+            return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        }
+
+        function columnAt(x, y) {
+            var found = null;
+            document.elementsFromPoint(x, y).forEach(function (element) {
+                if (!found && element.classList.contains("week-day-column")) {
+                    found = element;
+                }
+            });
+            return found;
+        }
+
+        function moveTask(task, date, start) {
+            var duration = Math.max(timeToMinutes(task.dataset.end) - timeToMinutes(task.dataset.start), 15);
+            var end = Math.min(start + duration, 23 * 60 + 59);
+
+            var form = new URLSearchParams();
+            form.append("title", task.dataset.title);
+            form.append("date", date);
+            form.append("enddate", date);
+            form.append("is_all_day", "0");
+            form.append("start_time", toTime(start));
+            form.append("end_time", toTime(end));
+            form.append("color", task.dataset.color);
+            form.append("repeats", "0");
+            form.append("repetition_type", "");
+            form.append("repetition_subtype", "");
+            form.append("repetition_value", "0");
+
+            fetch(task.dataset.updateUrl, {
+                method: "POST",
+                body: form,
+                credentials: "same-origin"
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error("move failed");
+                }
+                try {
+                    sessionStorage.setItem("energy-calendar-message",
+                        "Moved " + task.dataset.title + " to " + dayName(date) + " at " + toTime(start) + ".");
+                } catch (error) {}
+                window.location.reload();
+            }).catch(function () {
+                saveMessage.textContent = "Sorry, the task could not be moved. Please try again.";
+                saveMessage.classList.add("save-message-visible");
+            });
+        }
+
+        var moving = null;
+        var skipNextClick = false;
+
+        function stopMoving(task) {
+            task.classList.remove("week-task-moving");
+            task.style.transform = "";
+            columns.forEach(function (column) {
+                column.classList.remove("drop-target");
+            });
+        }
+
+        document.querySelectorAll(".week-task[data-movable]").forEach(function (task) {
+            task.addEventListener("pointerdown", function (event) {
+                if (event.button !== 0 || selected) {
+                    return;
+                }
+                moving = {
+                    task: task,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    grabOffset: event.clientY - task.getBoundingClientRect().top,
+                    active: false
+                };
+                task.setPointerCapture(event.pointerId);
+            });
+
+            task.addEventListener("pointermove", function (event) {
+                if (!moving || moving.task !== task) {
+                    return;
+                }
+                var dx = event.clientX - moving.startX;
+                var dy = event.clientY - moving.startY;
+                if (!moving.active && Math.sqrt(dx * dx + dy * dy) < 8) {
+                    return;
+                }
+                moving.active = true;
+                task.classList.add("week-task-moving");
+                task.style.transform = "translate(" + dx + "px, " + dy + "px)";
+                var target = columnAt(event.clientX, event.clientY);
+                columns.forEach(function (column) {
+                    column.classList.toggle("drop-target", column === target);
+                });
+            });
+
+            task.addEventListener("pointerup", function (event) {
+                if (!moving || moving.task !== task) {
+                    return;
+                }
+                var move = moving;
+                moving = null;
+                if (!move.active) {
+                    return;
+                }
+                skipNextClick = true;
+                stopMoving(task);
+                var column = columnAt(event.clientX, event.clientY);
+                if (column) {
+                    moveTask(task, column.dataset.date, minutesFromPosition(column, event.clientY - move.grabOffset));
+                }
+            });
+
+            task.addEventListener("pointercancel", function () {
+                moving = null;
+                stopMoving(task);
+            });
+
+            task.addEventListener("click", function (event) {
+                if (skipNextClick) {
+                    event.preventDefault();
+                    skipNextClick = false;
+                }
+            });
+        });
+
+        document.getElementById("place-add").addEventListener("click", function () {
+            if (selected) {
+                placeActivity(selected, daySelect.value, parseInt(timeSelect.value, 10));
+            }
+        });
+
+        document.getElementById("place-cancel").addEventListener("click", clearSelection);
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && selected) {
+                clearSelection();
+            }
         });
     })();
     </script>
 </body>
+</html>

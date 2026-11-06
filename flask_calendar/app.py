@@ -108,6 +108,33 @@ def create_app(config_overrides: Optional[Dict] = None) -> Flask:
 
     app.jinja_env.filters["task_details_for_markup"] = task_details_for_markup
 
+    def energy_level(color: Optional[str]) -> str:
+        """'low', 'medium' or 'high' for an energy colour, '' for any other colour."""
+        return app.config["ENERGY_LEVELS"].get((color or "").lower(), ("", ""))[0]
+
+    def energy_name(color: Optional[str]) -> str:
+        """Words for an energy colour, e.g. 'Low energy'."""
+        return app.config["ENERGY_LEVELS"].get((color or "").lower(), ("", ""))[1]
+
+    def text_color_for(background: Optional[str]) -> str:
+        """Dark or white text, whichever is easier to read on this background colour."""
+        value = (background or "").lstrip("#")
+        if len(value) != 6:
+            return "#1F1F1F"
+        channels = []
+        for index in (0, 2, 4):
+            channel = int(value[index:index + 2], 16) / 255
+            channels.append(channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4)
+        luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+        # pick whichever text colour gives the higher contrast ratio
+        dark_contrast = (luminance + 0.05) / (0.0137 + 0.05)
+        white_contrast = 1.05 / (luminance + 0.05)
+        return "#1F1F1F" if dark_contrast >= white_contrast else "#FFFFFF"
+
+    app.jinja_env.filters["text_color_for"] = text_color_for
+    app.jinja_env.filters["energy_level"] = energy_level
+    app.jinja_env.filters["energy_name"] = energy_name
+
     return app
 
 
