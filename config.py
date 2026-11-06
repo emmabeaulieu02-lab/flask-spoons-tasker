@@ -54,6 +54,20 @@ BUTTONS_COLORS_LIST = (
     ("#FF4848", "Red - high energy"),
 )
 
+# Activity bank shown on the week view: (name, energy colour, length in minutes).
+# Edit this list with the client to match her own activities and energy levels.
+ACTIVITY_BANK = (
+    ("Walk", "#3EB34F", 60),
+    ("Reading", "#3EB34F", 30),
+    ("Rest", "#3EB34F", 60),
+    ("Cooking", "#F2C81A", 60),
+    ("Laundry", "#F2C81A", 60),
+    ("Phone call", "#F2C81A", 30),
+    ("Medical appointment", "#FF4848", 60),
+    ("Grocery shopping", "#FF4848", 90),
+    ("Physiotherapy", "#FF4848", 60),
+)
+
 # percent of chance to do a GC-like sweep on save and clean empty and/or past hidden entries.
 # values [0, 100] -> Note that 0 disables it, 100 makes it run every time
 GC_ON_SAVE_CHANCE = 30

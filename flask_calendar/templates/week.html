@@ -65,6 +65,34 @@
         </a>
     </header>
 
+    <section class="activity-bank" aria-label="Activity bank">
+        <p class="activity-bank-help">
+            Drag an activity onto the calendar, or tap an activity and then tap a time.
+        </p>
+        <div class="activity-bins">
+            {% for level_color, level_label in energy_levels %}
+            <div class="activity-bin" style="border-color: {{ level_color }}">
+                <h2 class="activity-bin-title">{{ level_label }}</h2>
+                {% for title, color, minutes in activity_bank if color == level_color %}
+                <button
+                    type="button"
+                    class="activity"
+                    draggable="true"
+                    aria-pressed="false"
+                    data-title="{{ title }}"
+                    data-color="{{ color }}"
+                    data-minutes="{{ minutes }}"
+                    style="background-color: {{ color }}"
+                >
+                    {{ title }}
+                    <span class="activity-length">{{ minutes }} min</span>
+                </button>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
     <div class="week-scroll">
         <div
             class="week-view"
@@ -196,4 +224,110 @@
             {% endfor %}
         </div>
     </div>
+    <script>
+    (function () {
+        var startHour = {{ start_hour }};
+        var endHour = {{ end_hour }};
+        var hourHeight = {{ hour_height }};
+        var saveUrl = "{{ url_for('save_task_action', calendar_id=calendar_id) }}";
+        var activities = document.querySelectorAll(".activity");
+        var columns = document.querySelectorAll(".week-day-column");
+        var selected = null;
+        var dragged = null;
+
+        function pad(number) {
+            return (number < 10 ? "0" : "") + number;
+        }
+
+        function toTime(totalMinutes) {
+            return pad(Math.floor(totalMinutes / 60)) + ":" + pad(totalMinutes % 60);
+        }
+
+        function selectActivity(button) {
+            activities.forEach(function (other) {
+                other.classList.remove("activity-selected");
+                other.setAttribute("aria-pressed", "false");
+            });
+            if (selected === button) {
+                selected = null;
+                document.body.classList.remove("placing-activity");
+                return;
+            }
+            selected = button;
+            button.classList.add("activity-selected");
+            button.setAttribute("aria-pressed", "true");
+            document.body.classList.add("placing-activity");
+        }
+
+        function placeActivity(activity, column, clientY) {
+            // Work out the time from where the activity was dropped, rounded to 15 minutes
+            var offsetY = clientY - column.getBoundingClientRect().top;
+            var start = startHour * 60 + Math.round((offsetY / hourHeight) * 4) * 15;
+            start = Math.max(startHour * 60, Math.min(start, endHour * 60 - 15));
+            var end = Math.min(start + parseInt(activity.dataset.minutes, 10), 23 * 60 + 59);
+            var date = column.dataset.date;
+
+            var form = new URLSearchParams();
+            form.append("title", activity.dataset.title);
+            form.append("date", date);
+            form.append("enddate", date);
+            form.append("is_all_day", "0");
+            form.append("start_time", toTime(start));
+            form.append("end_time", toTime(end));
+            form.append("color", activity.dataset.color);
+            form.append("repeats", "0");
+            form.append("repetition_type", "");
+            form.append("repetition_subtype", "");
+            form.append("repetition_value", "0");
+
+            fetch(saveUrl, {
+                method: "POST",
+                body: form,
+                credentials: "same-origin"
+            }).then(function () {
+                window.location.reload();
+            }).catch(function () {
+                alert("Sorry, the activity could not be saved. Please try again.");
+            });
+        }
+
+        activities.forEach(function (button) {
+            button.addEventListener("click", function () {
+                selectActivity(button);
+            });
+            button.addEventListener("dragstart", function (event) {
+                dragged = button;
+                event.dataTransfer.setData("text/plain", button.dataset.title);
+            });
+            button.addEventListener("dragend", function () {
+                dragged = null;
+            });
+        });
+
+        columns.forEach(function (column) {
+            column.addEventListener("dragover", function (event) {
+                if (dragged) {
+                    event.preventDefault();
+                    column.classList.add("drop-target");
+                }
+            });
+            column.addEventListener("dragleave", function () {
+                column.classList.remove("drop-target");
+            });
+            column.addEventListener("drop", function (event) {
+                event.preventDefault();
+                column.classList.remove("drop-target");
+                if (dragged) {
+                    placeActivity(dragged, column, event.clientY);
+                }
+            });
+            column.addEventListener("click", function (event) {
+                if (!selected || event.target.closest(".week-task")) {
+                    return;
+                }
+                placeActivity(selected, column, event.clientY);
+            });
+        });
+    })();
+    </script>
 </body>

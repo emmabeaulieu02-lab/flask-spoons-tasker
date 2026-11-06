@@ -472,6 +472,8 @@ def weekly_calendar_action(calendar_id: str):
         hours=range(start_hour, end_hour),
         hour_height=hour_height,
         grid_height=(end_hour - start_hour) * hour_height,
+        activity_bank=current_app.config["ACTIVITY_BANK"],
+        energy_levels=current_app.config["BUTTONS_COLORS_LIST"],
     )
 
 @authenticated

@@ -511,3 +511,59 @@ ul.tasks li:not(.greyed),
     margin: 2px 0;
     padding: 2px 6px;
 }
+
+/* Activity bank: bins of ready-made activities to drag onto the week view */
+.activity-bank {
+    padding: 8px 12px;
+}
+
+.activity-bank-help {
+    font-size: 1.1em;
+    margin: 4px 0 8px 0;
+}
+
+.activity-bins {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.activity-bin {
+    background: #fff;
+    border: 3px solid;
+    border-radius: 10px;
+    flex: 1 1 220px;
+    padding: 8px;
+}
+
+.activity-bin-title {
+    font-size: 1.1em;
+    margin: 0 0 6px 0;
+}
+
+.activity {
+    border: 3px solid transparent;
+    border-radius: 8px;
+    color: #000;
+    cursor: grab;
+    font-size: 1.1em;
+    margin: 4px;
+    min-height: 44px;
+    padding: 8px 14px;
+}
+
+.activity-length {
+    font-size: 0.8em;
+    margin-left: 4px;
+}
+
+.activity-selected {
+    border-color: #000;
+    box-shadow: 0 0 0 3px #fff, 0 0 0 6px #000;
+}
+
+.drop-target,
+.placing-activity .week-day-column:hover {
+    background-color: #EAF4FF;
+    cursor: copy;
+}
