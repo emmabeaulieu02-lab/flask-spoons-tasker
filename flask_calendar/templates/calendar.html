@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <title>{{ month_name }} {{ year }} - Energy Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for("static", filename="") }}favicon_{{ current_day }}.png" id="favicon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,11 +15,11 @@
     <div id="statusbar" class="">Processing...</div>
 
     <header class="header">
-        <input type="button" class="header-button" value="+"
+        <input type="button" class="header-button header-add" value="+"
             onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" aria-label="New task" />
-        <input type="button" class="header-button" value="&lt;" onclick="window.location='{{ previous_month_link }}'"
+        <input type="button" class="header-button" value="&lsaquo;" onclick="window.location='{{ previous_month_link }}'"
             title="Previous month" aria-label="Previous month" />
-        <input type="button" class="header-button" value="&gt;" onclick="window.location='{{ next_month_link }}'"
+        <input type="button" class="header-button" value="&rsaquo;" onclick="window.location='{{ next_month_link }}'"
             title="Next month" aria-label="Next month" />
         <h1 class="current-date">
             {{ month_name }} {{ year }}

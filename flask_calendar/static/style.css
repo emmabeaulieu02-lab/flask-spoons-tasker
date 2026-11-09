@@ -1210,3 +1210,679 @@ button {
     list-style: disc;
     margin: 4px 0 4px 20px;
 }
+
+/* ======================================================================
+   Material You look (matches the team's Prototype 2 build)
+   Colours follow Material Design 3. Light or dark follows the device.
+   Everything above still applies: energy words on tasks, dark text on
+   energy colours, 44px touch targets, no animations.
+   ====================================================================== */
+
+:root {
+    --md-primary: #6750A4;
+    --md-on-primary: #FFFFFF;
+    --md-primary-container: #EADDFF;
+    --md-on-primary-container: #21005D;
+    --md-secondary-container: #E8DEF8;
+    --md-on-secondary-container: #1D192B;
+    --md-surface: #FFFBFE;
+    --md-surface-low: #F7F2FA;
+    --md-surface-mid: #F3EDF7;
+    --md-surface-high: #ECE6F0;
+    --md-surface-highest: #E6E0E9;
+    --md-on-surface: #1C1B1F;
+    --md-on-surface-variant: #49454F;
+    --md-outline: #79747E;
+    --md-outline-variant: #CAC4D0;
+    --md-success-container: #D8F0DC;
+    --md-warning-container: #FBEFC8;
+    --md-error-container: #F9DEDC;
+
+    /* Energy colours: same green / yellow / red, with dark text on top */
+    --energy-low: #7FC98F;
+    --energy-low-edge: #1F6F33;
+    --energy-medium: #F3D46B;
+    --energy-medium-edge: #8A6A00;
+    --energy-high: #F09A9A;
+    --energy-high-edge: #A32020;
+    --energy-text: #1C1B1F;
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --md-primary: #D0BCFF;
+        --md-on-primary: #381E72;
+        --md-primary-container: #4F378B;
+        --md-on-primary-container: #EADDFF;
+        --md-secondary-container: #4A4458;
+        --md-on-secondary-container: #E8DEF8;
+        --md-surface: #141218;
+        --md-surface-low: #1D1B20;
+        --md-surface-mid: #211F26;
+        --md-surface-high: #2B2930;
+        --md-surface-highest: #36343B;
+        --md-on-surface: #E6E0E9;
+        --md-on-surface-variant: #CAC4D0;
+        --md-outline: #938F99;
+        --md-outline-variant: #49454F;
+        --md-success-container: #1F3A26;
+        --md-warning-container: #3D3416;
+        --md-error-container: #4A1F1F;
+        /* Block edges lighter so they still show on a dark page */
+        --energy-low-edge: #A6E3B3;
+        --energy-medium-edge: #F7E3A0;
+        --energy-high-edge: #F7C3C3;
+    }
+}
+
+/* ---------- Page ---------- */
+html,
+body {
+    background-color: var(--md-surface);
+    color: var(--md-on-surface);
+    font-family: "Roboto", "Atkinson Hyperlegible", "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 12px 16px;
+}
+
+a {
+    color: var(--md-primary);
+}
+
+:focus-visible {
+    outline: 3px solid var(--md-primary);
+    outline-offset: 2px;
+}
+
+h1, h2, h3 {
+    font-weight: 400;
+}
+
+/* ---------- Top bar ---------- */
+.header,
+.week-header {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.header .current-date,
+h1.current-date {
+    color: var(--md-on-surface);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.3;
+    padding: 0 8px;
+}
+
+/* Round icon buttons: + is filled, arrows are tonal */
+.header-button,
+.header .button,
+.week-header a.header-button {
+    align-items: center;
+    background: var(--md-secondary-container);
+    border: none;
+    border-radius: 50%;
+    box-sizing: border-box;
+    color: var(--md-on-secondary-container);
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 26px;
+    font-weight: 400;
+    height: 48px;
+    justify-content: center;
+    line-height: 1;
+    min-height: 48px;
+    min-width: 48px;
+    padding: 0 0 3px 0;
+    text-decoration: none;
+    width: 48px;
+}
+
+.header-button.header-add {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    font-size: 30px;
+}
+
+/* Pill buttons in the top bar */
+.view-link,
+.back-to-current,
+.week-header .back-to-current,
+.week-header .view-link,
+.toggle-past-events,
+.enter-settings {
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--md-outline);
+    border-radius: 999px;
+    box-sizing: border-box;
+    color: var(--md-primary);
+    cursor: pointer;
+    display: inline-flex;
+    float: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    min-height: 44px;
+    padding: 0 20px;
+    text-decoration: none;
+}
+
+.header .back-to-current a {
+    color: var(--md-primary);
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+/* Main actions stand out: tonal fill */
+.toggle-past-events,
+.suggest-link,
+.week-header .suggest-link {
+    background: var(--md-secondary-container);
+    border-color: transparent !important;
+    color: var(--md-on-secondary-container);
+}
+
+.view-link {
+    margin-left: 0;
+}
+
+.header .view-link:first-of-type,
+.week-header .suggest-link {
+    margin-left: auto;
+}
+
+/* ---------- Month view ---------- */
+.calendar-header,
+.calendar {
+    border-color: var(--md-outline-variant);
+    min-width: 0;
+}
+
+.weekday-header {
+    background: var(--md-surface-mid);
+    border-color: var(--md-outline-variant);
+    color: var(--md-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 8px 3px;
+    text-transform: uppercase;
+}
+
+.day {
+    background-color: var(--md-surface);
+    border-color: var(--md-outline-variant);
+    padding: 6px;
+}
+
+.day:hover {
+    background-color: var(--md-surface-low);
+}
+
+.othermonth {
+    background-color: var(--md-surface-mid);
+}
+
+span.daynumber {
+    color: var(--md-on-surface);
+    display: inline-block;
+    font-size: 16px;
+    padding: 4px 6px;
+}
+
+.othermonth span.daynumber {
+    color: var(--md-on-surface-variant);
+}
+
+span.daynumber-current,
+.week-day-number-current {
+    align-items: center;
+    background-color: var(--md-primary);
+    border: none;
+    border-radius: 50%;
+    color: var(--md-on-primary);
+    display: inline-flex;
+    font-size: 16px;
+    font-weight: 700;
+    height: 32px;
+    justify-content: center;
+    min-width: 32px;
+    padding: 0;
+}
+
+.energy-total {
+    color: var(--md-on-surface-variant);
+}
+
+.energy-total-over {
+    color: var(--md-on-surface);
+}
+
+/* Tasks: rounded blocks in the energy colours, always with dark text */
+ul.tasks li {
+    border-radius: 8px;
+    margin-bottom: 4px;
+    padding: 4px 8px;
+}
+
+.energy-low { background-color: var(--energy-low) !important; border-color: var(--energy-low-edge) !important; color: var(--energy-text) !important; }
+.energy-medium { background-color: var(--energy-medium) !important; border-color: var(--energy-medium-edge) !important; color: var(--energy-text) !important; }
+.energy-high { background-color: var(--energy-high) !important; border-color: var(--energy-high-edge) !important; color: var(--energy-text) !important; }
+
+ul.tasks li.energy-low,
+ul.tasks li.energy-medium,
+ul.tasks li.energy-high,
+.week-task.energy-low,
+.week-task.energy-medium,
+.week-task.energy-high,
+.week-all-day-task.energy-low,
+.week-all-day-task.energy-medium,
+.week-all-day-task.energy-high {
+    border-left-width: 0;
+    box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.28);
+}
+
+.energy-tag {
+    background-color: rgba(255, 255, 255, 0.75);
+    border-radius: 999px;
+    color: #1C1B1F;
+    padding: 0 6px;
+}
+
+.task.greyed {
+    background-color: var(--md-surface-highest) !important;
+    color: var(--md-on-surface-variant) !important;
+}
+
+.task.greyed .energy-tag {
+    background-color: transparent;
+    color: inherit;
+}
+
+.remove-task,
+.hide-recurrent-task,
+.recurrent-task,
+.edit-task {
+    border-radius: 999px;
+}
+
+/* ---------- Week view ---------- */
+.week-corner,
+.week-day-heading,
+.all-day-label,
+.all-day-column {
+    background: var(--md-surface-mid);
+    border-color: var(--md-outline-variant);
+}
+
+.week-day-heading {
+    padding: 8px 4px;
+}
+
+.week-day-name,
+.all-day-label,
+.time-label {
+    color: var(--md-on-surface-variant);
+    font-weight: 500;
+}
+
+.week-day-number {
+    color: var(--md-on-surface);
+    font-size: 20px;
+}
+
+.week-day-number.week-day-number-current {
+    background-color: var(--md-primary);
+    color: var(--md-on-primary);
+    font-size: 18px;
+}
+
+.time-scale,
+.time-label {
+    border-color: var(--md-outline-variant);
+}
+
+.time-label span {
+    background: var(--md-surface);
+}
+
+.week-day-column {
+    background-color: var(--md-surface);
+    border-color: var(--md-outline-variant);
+}
+
+.week-hour-line {
+    border-color: var(--md-outline-variant);
+}
+
+.week-task,
+.week-all-day-task {
+    border-radius: 8px;
+}
+
+.week-task {
+    left: 4px;
+    padding: 4px 8px;
+    right: 4px;
+}
+
+.week-task:hover,
+.week-all-day-task:hover {
+    filter: brightness(0.95);
+}
+
+.week-task-moving {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.drop-target,
+.placing-activity .week-day-column:hover {
+    background-color: var(--md-primary-container);
+}
+
+/* ---------- Messages ---------- */
+.red-alert {
+    background-color: var(--md-error-container);
+    border: none;
+    border-radius: 8px;
+    color: var(--md-on-surface);
+    padding: 4px 8px;
+}
+
+.save-message-visible {
+    background: var(--md-success-container);
+    border: none;
+    border-radius: 12px;
+    color: var(--md-on-surface);
+    margin: 8px 0;
+    padding: 12px 16px;
+}
+
+.save-message-warning {
+    background: var(--md-warning-container);
+}
+
+.suggestion-panel,
+.place-panel {
+    background: var(--md-surface-high);
+    border: none;
+    border-radius: 16px;
+    color: var(--md-on-surface);
+    margin: 8px 0 12px 0;
+    padding: 16px 20px;
+}
+
+.suggest-ghost {
+    border-color: var(--md-primary);
+    border-radius: 8px;
+    color: var(--md-on-surface);
+}
+
+/* ---------- Activity bank ---------- */
+.activity-bank {
+    background: var(--md-surface-low);
+    border-radius: 16px 16px 0 0;
+    border-top: none;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.12);
+    margin: 0 -16px;
+    padding: 8px 16px;
+}
+
+.activity-bank-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.activity-bank-help {
+    color: var(--md-on-surface-variant);
+}
+
+.activity-bin {
+    background: var(--md-surface-high);
+    border: 2px solid;
+    border-radius: 16px;
+    padding: 8px 12px;
+}
+
+.activity-bin-title {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.energy-bin-low { border-color: var(--energy-low-edge); }
+.energy-bin-medium { border-color: var(--energy-medium-edge); }
+.energy-bin-high { border-color: var(--energy-high-edge); }
+
+.activity {
+    border: 2px solid;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.activity-selected,
+.activity[aria-pressed="true"] {
+    box-shadow: 0 0 0 3px var(--md-surface-high), 0 0 0 6px var(--md-primary);
+}
+
+/* ---------- Forms: task, settings, login ---------- */
+.task-page-title,
+.task-details-form h1 {
+    color: var(--md-on-surface);
+    font-size: 1.75rem;
+    font-weight: 400;
+}
+
+#task-details-form,
+.settings-page,
+.login-page .task-details-form {
+    background: var(--md-surface-high);
+    border-radius: 16px;
+    box-sizing: border-box;
+    margin: 16px auto;
+    max-width: 640px;
+    padding: 20px 24px;
+}
+
+.settings-page h1 {
+    margin-top: 0;
+}
+
+.task-details-form label,
+.settings-row label {
+    color: var(--md-on-surface);
+    font-weight: 500;
+}
+
+.settings-page h2 {
+    color: var(--md-primary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.settings-help {
+    color: var(--md-on-surface-variant);
+}
+
+.task-details-form input[type=text],
+.task-details-form input[type=password],
+.task-details-form input[type=date],
+.task-details-form input[type=time],
+.task-details-form input[type=number],
+.task-details-form select,
+.place-panel select {
+    background: var(--md-surface-high);
+    border: 1px solid var(--md-outline);
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: var(--md-on-surface);
+    font-family: inherit;
+    font-size: 1rem;
+    min-height: 52px;
+    padding: 8px 14px;
+}
+
+.task-details-form input[type=password] {
+    width: 100%;
+}
+
+.task-details-form input:focus,
+.task-details-form select:focus {
+    border-color: var(--md-primary);
+    box-shadow: inset 0 0 0 1px var(--md-primary);
+    outline: none;
+}
+
+.task-details-form input[type=checkbox],
+.task-details-form input[type=radio],
+.place-repeat input {
+    accent-color: var(--md-primary);
+}
+
+/* Buttons: pill shaped. Save/Login filled, others outlined */
+.form-button,
+.place-button,
+.button-link,
+.task-details-form .form-button {
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--md-outline);
+    border-radius: 999px;
+    box-sizing: border-box;
+    color: var(--md-primary);
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 88px;
+    padding: 0 24px;
+    text-decoration: none;
+}
+
+.form-button-primary,
+.task-details-form .form-button-primary,
+.suggestion-accept,
+#place-add {
+    background: var(--md-primary);
+    border-color: var(--md-primary);
+    color: var(--md-on-primary);
+}
+
+.form-button:disabled,
+.place-button:disabled {
+    cursor: default;
+    opacity: 0.38;
+}
+
+/* Energy choice on the task form: big pills in the energy colours */
+#colors-and-emojis .form-button.color {
+    border: 3px solid transparent !important;
+    color: var(--energy-text);
+    font-size: 1.1rem;
+    margin: 6px 6px 0 0;
+    min-height: 52px;
+    padding: 0 22px;
+}
+
+#colors-and-emojis .form-button.color[aria-pressed="true"] {
+    border-color: var(--md-on-surface) !important;
+    box-shadow: 0 0 0 2px var(--md-surface-high), 0 0 0 4px var(--md-primary);
+}
+
+.more-repeat-options summary {
+    color: var(--md-primary);
+}
+
+/* ---------- Login page ---------- */
+.login-page {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.login-page .task-details-form {
+    width: 100%;
+    max-width: 420px;
+}
+
+.login-page h1 {
+    font-size: 1.75rem;
+    margin: 0 0 8px 0;
+}
+
+.login-page br {
+    display: none;
+}
+
+.login-page label {
+    display: block;
+    margin-top: 16px;
+}
+
+.login-page .form-button-primary {
+    margin-top: 24px;
+    width: 100%;
+}
+
+/* ---------- Small screens ---------- */
+@media screen and (max-width: 650px) {
+    body {
+        padding: 8px;
+    }
+
+    .header .current-date,
+    h1.current-date {
+        font-size: 1.25rem;
+    }
+
+    .header .view-link:first-of-type,
+    .week-header .suggest-link {
+        margin-left: 0;
+    }
+}
+
+/* Tablets: smaller title so the week top bar fits on one line */
+@media screen and (min-width: 651px) and (max-width: 1180px) {
+    .header .current-date,
+    h1.current-date {
+        font-size: 1.25rem;
+        padding: 0 2px;
+    }
+
+    .header,
+    .week-header {
+        gap: 6px;
+    }
+
+    .header-button,
+    .header .button,
+    .week-header a.header-button {
+        height: 44px;
+        min-height: 44px;
+        min-width: 44px;
+        width: 44px;
+    }
+
+    .view-link,
+    .back-to-current,
+    .week-header .back-to-current,
+    .week-header .view-link,
+    .toggle-past-events,
+    .enter-settings {
+        padding: 0 12px;
+    }
+}

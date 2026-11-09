@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <title>Week of {{ week_start.strftime("%B") }} {{ week_start.day }} - Energy Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for("static", filename="") }}favicon_{{ current_day }}.png" id="favicon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +14,7 @@
     <div id="statusbar">Processing...</div>
 
     <header class="header week-header">
-         <input type="button" class="header-button" value="+"
+         <input type="button" class="header-button header-add" value="+"
             onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" aria-label="New task" />
 
         <a
