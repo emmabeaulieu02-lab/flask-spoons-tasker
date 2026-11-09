@@ -90,6 +90,12 @@ ACTIVITY_BANK = (
     ("Bath", "#3EB34F", 30, False),
     ("Reading", "#3EB34F", 30, False),
     ("Rest", "#3EB34F", 60, False),
+    ("Food prep (part 1 of 3)", "#3EB34F", 60, False),  # one part per day
+    ("Food prep (part 2 of 3)", "#3EB34F", 60, False),
+    ("Food prep (part 3 of 3)", "#3EB34F", 60, False),
+    ("Unload dishwasher: cutlery", "#3EB34F", 15, False),  # one part per day
+    ("Unload dishwasher: dishes", "#3EB34F", 15, False),
+    ("Unload dishwasher: cups", "#3EB34F", 15, False),
     # Yellow - medium energy
     ("Church and fellowship", "#F2C81A", 180, True),  # Sunday morning until 1:00
     ("Physiotherapy", "#F2C81A", 180, True),  # Friday morning until 1:00
@@ -101,14 +107,10 @@ ACTIVITY_BANK = (
     ("Phone call", "#F2C81A", 30, False),
     # Red - high energy
     ("Changing the bed", "#FF4848", 60, False),
-    ("Food prep (part 1 of 3)", "#FF4848", 60, False),  # very tiring: one part per day
-    ("Food prep (part 2 of 3)", "#FF4848", 60, False),
-    ("Food prep (part 3 of 3)", "#FF4848", 60, False),
+    ("Food prep (all at once)", "#FF4848", 180, False),  # red done in one go; green split in thirds
     ("Vacuuming", "#FF4848", 60, False),  # on a different day from washing floors
     ("Washing floors", "#FF4848", 60, False),
-    ("Unload dishwasher: cutlery", "#FF4848", 15, False),  # one part per day
-    ("Unload dishwasher: dishes", "#FF4848", 15, False),
-    ("Unload dishwasher: cups", "#FF4848", 15, False),
+    ("Unload dishwasher (all at once)", "#FF4848", 45, False),  # red done in one go; green split in 3 parts
     ("Grocery shopping", "#FF4848", 90, False),
     ("Medical appointment", "#FF4848", 60, True),
 )
