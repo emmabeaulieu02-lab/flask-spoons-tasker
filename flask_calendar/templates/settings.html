@@ -89,6 +89,32 @@
         <a class="form-button button-link" href="{{ url_for('weekly_calendar_action', calendar_id=calendar_id) }}">Back to calendar</a>
     </form>
 
+    <h2 id="my-activities">My activities</h2>
+    {% if removed %}
+    <div class="save-message save-message-visible" role="status">The activity was removed.</div>
+    {% endif %}
+    {% if own_activities %}
+    <p class="settings-help">Activities you added. They appear in the activity bins on the week view.</p>
+    <ul class="own-activity-list">
+        {% for activity in own_activities %}
+        <li class="own-activity">
+            <span class="activity energy-{{ activity.color|energy_level }}">
+                {% if activity.locked %}<span aria-hidden="true">&#128274;</span>{% endif %}
+                {{ activity.title }}
+                <span class="activity-length">{{ activity.minutes }} min</span>
+            </span>
+            <span class="own-activity-energy">{{ energy_names.get(activity.color, "") }}</span>
+            <form method="POST" action="{{ url_for('remove_activity_action', calendar_id=calendar_id) }}">
+                <input type="hidden" name="title" value="{{ activity.title }}" />
+                <button type="submit" class="form-button" aria-label="Remove {{ activity.title }}">Remove</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="settings-help">None yet. When you add a task, tick "Also add to my activities" to keep it here.</p>
+    {% endif %}
+
     <h2>What the calendar has learned</h2>
     {% if learned %}
     <ul class="learned-list">

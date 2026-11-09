@@ -40,6 +40,36 @@ def get_authentication() -> Authentication:
     return cast(Authentication, auth)
 
 
+def activity_bank_for(calendar_data: CalendarData, data: dict) -> List[Tuple[str, str, int, bool]]:
+    """The ready-made activities plus the ones she added. Hers replace a ready-made one with the same name."""
+    own = calendar_data.load_activities(data)
+    own_names = {activity["title"].lower() for activity in own}
+    bank = [item for item in current_app.config["ACTIVITY_BANK"] if item[0].lower() not in own_names]
+    bank += [(a["title"], a["color"], int(a["minutes"]), bool(a["locked"])) for a in own]
+    return bank
+
+
+def energy_color(color: str) -> Optional[str]:
+    """The energy colour exactly as written in the settings, or None if it is not green, yellow or red."""
+    for code, _label in current_app.config["BUTTONS_COLORS_LIST"]:
+        if code.lower() == (color or "").strip().lower():
+            return cast(str, code)
+    return None
+
+
+def task_minutes(start_time: str, end_time: Optional[str], is_all_day: bool) -> int:
+    """How long a task lasts, in minutes. All-day or unclear tasks count as one hour."""
+    if is_all_day or not start_time or not end_time:
+        return 60
+    try:
+        start_h, start_m = [int(part) for part in start_time.split(":")[:2]]
+        end_h, end_m = [int(part) for part in end_time.split(":")[:2]]
+    except ValueError:
+        return 60
+    minutes = (end_h * 60 + end_m) - (start_h * 60 + start_m)
+    return minutes if 15 <= minutes <= 12 * 60 else 60
+
+
 @authenticated
 def index_action() -> Response:
     username = get_session_username(session_id=str(request.cookies.get(constants.SESSION_ID)))
@@ -407,6 +437,13 @@ def save_task_action(calendar_id: str) -> Response:
 
     learn_from_placement(calendar_id, color, startdate, start_time, is_all_day)
 
+    # "Also add to my activities": save it in her activity bank too
+    bank_color = energy_color(color)
+    if request.form.get("add_to_bank") == "1" and title and bank_color:
+        calendar_data.add_activity(
+            calendar_id, title[:60], bank_color, task_minutes(start_time, end_time, is_all_day), locked
+        )
+
     if year is None:
         return redirect("{}/{}/".format(current_app.config["BASE_URL"], calendar_id), code=302)
     else:
@@ -560,7 +597,7 @@ def weekly_calendar_action(calendar_id: str):
         hours=range(start_hour, end_hour),
         hour_height=hour_height,
         grid_height=(end_hour - start_hour) * hour_height,
-        activity_bank=current_app.config["ACTIVITY_BANK"],
+        activity_bank=activity_bank_for(calendar_data, data),
         energy_levels=current_app.config["BUTTONS_COLORS_LIST"],
         suggestion=suggestion,
         suggestion_json=json.dumps(suggestion["moves"]) if suggestion else "[]",
@@ -582,7 +619,10 @@ def settings_action(calendar_id: str):
         energy_points=current_app.config["ENERGY_POINTS"],
         saved=request.args.get("saved") == "1",
         forgot=request.args.get("forgot") == "1",
+        removed=request.args.get("removed") == "1",
         learned=learned_summary(calendar_data.load_learned(data)),
+        own_activities=calendar_data.load_activities(data),
+        energy_names=dict(current_app.config["BUTTONS_COLORS_LIST"]),
         hours=range(0, 24),
     )
 
@@ -622,6 +662,15 @@ def save_settings_action(calendar_id: str) -> Response:
     calendar_data.save_settings(calendar_id, settings)
 
     return redirect("{}/{}/settings/?saved=1".format(current_app.config["BASE_URL"], calendar_id), code=302)
+
+
+@authenticated
+@authorized
+def remove_activity_action(calendar_id: str) -> Response:
+    """Removes one of her own activities from the activity bank."""
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    calendar_data.remove_activity(calendar_id, request.form.get("title", ""))
+    return redirect("{}/{}/settings/?removed=1#my-activities".format(current_app.config["BASE_URL"], calendar_id), code=302)
 
 
 @authenticated

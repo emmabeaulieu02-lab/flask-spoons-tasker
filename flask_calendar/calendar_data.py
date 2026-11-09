@@ -17,6 +17,7 @@ KEY_REPETITIVE_TASK = "repetition"
 KEY_REPETITIVE_HIDDEN_TASK = "hidden_repetition"
 KEY_SETTINGS = "settings"
 KEY_LEARNED = "learned"
+KEY_ACTIVITIES = "activities"
 
 
 class CalendarData:
@@ -311,6 +312,24 @@ class CalendarData:
                     break
         self._save_calendar(data, filename=calendar_id)
         return moved
+
+    @staticmethod
+    def load_activities(data: Dict) -> List[Dict]:
+        """Activities she added to the activity bank herself."""
+        return cast(List[Dict], data.get(KEY_ACTIVITIES, []))
+
+    def add_activity(self, calendar_id: str, title: str, color: str, minutes: int, locked: bool) -> None:
+        """Adds an activity to her bank. One with the same name is replaced, so there are no duplicates."""
+        data = self.load_calendar(calendar_id)
+        activities = [a for a in data.get(KEY_ACTIVITIES, []) if a["title"].lower() != title.lower()]
+        activities.append({"title": title, "color": color, "minutes": minutes, "locked": locked})
+        data[KEY_ACTIVITIES] = activities
+        self._save_calendar(data, filename=calendar_id)
+
+    def remove_activity(self, calendar_id: str, title: str) -> None:
+        data = self.load_calendar(calendar_id)
+        data[KEY_ACTIVITIES] = [a for a in data.get(KEY_ACTIVITIES, []) if a["title"] != title]
+        self._save_calendar(data, filename=calendar_id)
 
     def save_settings(self, calendar_id: str, settings: Dict) -> None:
         data = self.load_calendar(calendar_id)

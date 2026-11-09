@@ -198,6 +198,12 @@
                     {% if task.get("locked") %}checked="checked"{% endif %} />
                 Locked: can't be moved or deleted by accident (for appointments, church, etc.)
             </label>
+            {% if not editing %}
+            <label class="check-option" for="add_to_bank">
+                <input type="checkbox" id="add_to_bank" name="add_to_bank" value="1" />
+                Also add to my activities, so I can drag it onto the calendar next time
+            </label>
+            {% endif %}
         </div>
 
         <input class="form-button form-button-primary" type="submit" value="Save" />

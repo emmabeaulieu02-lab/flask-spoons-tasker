@@ -1886,3 +1886,37 @@ ul.tasks li.energy-high,
         padding: 0 12px;
     }
 }
+
+/* ---------- Settings: my activities ---------- */
+.own-activity-list {
+    margin: 8px 0;
+    padding: 0;
+}
+
+.own-activity {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin: 8px 0;
+}
+
+.own-activity .activity {
+    cursor: default;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+
+.own-activity-energy {
+    color: var(--md-on-surface-variant);
+}
+
+.own-activity form {
+    margin-left: auto;
+}
+
+.own-activity .form-button {
+    margin: 0;
+}
