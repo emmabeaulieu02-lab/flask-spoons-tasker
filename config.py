@@ -84,16 +84,33 @@ DEFAULT_ENERGY_SETTINGS = {
 # Locked activities can't be moved by accident (for example appointments).
 # Edit this list with the client to match her own activities and energy levels.
 ACTIVITY_BANK = (
-    ("Walk", "#3EB34F", 60, False),
+    # Green - low energy
+    ("Morning walk", "#3EB34F", 30, False),  # daily
+    ("Breakfast", "#3EB34F", 30, False),  # daily
+    ("Bath", "#3EB34F", 30, False),
     ("Reading", "#3EB34F", 30, False),
     ("Rest", "#3EB34F", 60, False),
+    # Yellow - medium energy
+    ("Church and fellowship", "#F2C81A", 180, True),  # Sunday morning until 1:00
+    ("Physiotherapy", "#F2C81A", 180, True),  # Friday morning until 1:00
+    ("Seniors exercise class", "#F2C81A", 180, True),  # Wednesday morning until 1:00
+    ("Music lesson", "#F2C81A", 60, True),  # Tuesday evening
+    ("Music practice", "#F2C81A", 30, False),  # once during the week
     ("Cooking", "#F2C81A", 60, False),
     ("Laundry", "#F2C81A", 60, False),
     ("Phone call", "#F2C81A", 30, False),
-    ("Church", "#F2C81A", 90, True),
-    ("Medical appointment", "#FF4848", 60, True),
+    # Red - high energy
+    ("Changing the bed", "#FF4848", 60, False),
+    ("Food prep (part 1 of 3)", "#FF4848", 60, False),  # very tiring: one part per day
+    ("Food prep (part 2 of 3)", "#FF4848", 60, False),
+    ("Food prep (part 3 of 3)", "#FF4848", 60, False),
+    ("Vacuuming", "#FF4848", 60, False),  # on a different day from washing floors
+    ("Washing floors", "#FF4848", 60, False),
+    ("Unload dishwasher: cutlery", "#FF4848", 15, False),  # one part per day
+    ("Unload dishwasher: dishes", "#FF4848", 15, False),
+    ("Unload dishwasher: cups", "#FF4848", 15, False),
     ("Grocery shopping", "#FF4848", 90, False),
-    ("Physiotherapy", "#FF4848", 60, True),
+    ("Medical appointment", "#FF4848", 60, True),
 )
 
 # percent of chance to do a GC-like sweep on save and clean empty and/or past hidden entries.
