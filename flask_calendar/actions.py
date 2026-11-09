@@ -670,7 +670,17 @@ def save_settings_action(calendar_id: str) -> Response:
     if red_time not in ("any", "morning", "afternoon", "evening"):
         red_time = "any"
 
+    theme = request.form.get("theme", "light")
+    if theme not in ("light", "dark", "auto"):
+        theme = "light"
+    font_size = request.form.get("font_size", "normal")
+    if font_size not in ("normal", "large", "extra-large"):
+        font_size = "normal"
+
     settings = {
+        "theme": theme,
+        "font_size": font_size,
+        "show_energy_words": request.form.get("show_energy_words") == "1",
         "daily_limit": number("daily_limit", 0.5, 50),
         "max_red": int(number("max_red", 0, 10)),
         "red_time": red_time,

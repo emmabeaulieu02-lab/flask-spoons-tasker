@@ -1249,8 +1249,34 @@ button {
     color-scheme: light dark;
 }
 
+:root[data-theme="dark"] {
+    --md-primary: #D0BCFF;
+    --md-on-primary: #381E72;
+    --md-primary-container: #4F378B;
+    --md-on-primary-container: #EADDFF;
+    --md-secondary-container: #4A4458;
+    --md-on-secondary-container: #E8DEF8;
+    --md-surface: #141218;
+    --md-surface-low: #1D1B20;
+    --md-surface-mid: #211F26;
+    --md-surface-high: #2B2930;
+    --md-surface-highest: #36343B;
+    --md-on-surface: #E6E0E9;
+    --md-on-surface-variant: #CAC4D0;
+    --md-outline: #938F99;
+    --md-outline-variant: #49454F;
+    --md-success-container: #1F3A26;
+    --md-warning-container: #3D3416;
+    --md-error-container: #4A1F1F;
+    /* Block edges lighter so they still show on a dark page */
+    --energy-low-edge: #A6E3B3;
+    --energy-medium-edge: #F7E3A0;
+    --energy-high-edge: #F7C3C3;
+    color-scheme: dark;
+}
+
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root[data-theme="auto"] {
         --md-primary: #D0BCFF;
         --md-on-primary: #381E72;
         --md-primary-container: #4F378B;
@@ -1273,7 +1299,12 @@ button {
         --energy-low-edge: #A6E3B3;
         --energy-medium-edge: #F7E3A0;
         --energy-high-edge: #F7C3C3;
+        color-scheme: dark;
     }
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
 }
 
 /* ---------- Page ---------- */
@@ -1919,4 +1950,42 @@ ul.tasks li.energy-high,
 
 .own-activity .form-button {
     margin: 0;
+}
+
+
+/* ---------- Display settings (client meeting 3) ---------- */
+
+/* Text size: the whole page is scaled so layouts keep their shape */
+:root[data-font="large"] body { zoom: 1.15; }
+:root[data-font="extra-large"] body { zoom: 1.3; }
+
+/* Hide Low / Medium / High on tasks, but keep them for screen readers */
+.hide-energy-words .energy-tag {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+/* Stronger day-name bar in the month and week views */
+.weekday-header,
+.week-day-heading,
+.week-corner {
+    background: var(--md-surface-highest);
+    border-bottom: 2px solid var(--md-outline);
+}
+
+.weekday-header,
+.week-day-name {
+    color: var(--md-on-surface);
+    font-weight: 700;
+}
+
+.week-day-number {
+    font-weight: 500;
 }

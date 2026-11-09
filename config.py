@@ -64,9 +64,9 @@ ENERGY_LEVELS = {
 
 # Energy points for each level, used to check that a day is balanced
 ENERGY_POINTS = {
-    "low": 0.5,
-    "medium": 1,
-    "high": 3,
+    "low": 1,
+    "medium": 3,  # client meeting 3: two yellow tasks should already feel like a full day
+    "high": 4,
 }
 
 # Default balance settings. The client can change these on the Settings page.
@@ -77,6 +77,9 @@ DEFAULT_ENERGY_SETTINGS = {
     "rest_after_red_day": False,  # warn when two days in a row both have red tasks
     "day_start": WEEK_VIEW_START_HOUR,  # first hour shown in the week view
     "day_end": WEEK_VIEW_END_HOUR,  # last hour shown in the week view
+    "theme": "light",  # light, dark or auto (follow the tablet). Client prefers light.
+    "font_size": "normal",  # normal, large or extra-large
+    "show_energy_words": True,  # show Low / Medium / High on each task
 }
 
 # Activity bank shown on the week view:
@@ -85,7 +88,7 @@ DEFAULT_ENERGY_SETTINGS = {
 # Edit this list with the client to match her own activities and energy levels.
 ACTIVITY_BANK = (
     # Green - low energy
-    ("Morning walk", "#3EB34F", 30, False),  # daily
+    ("Walk", "#3EB34F", 90, True),  # daily, 10:00-11:30; Sunday after church
     ("Breakfast", "#3EB34F", 30, False),  # daily
     ("Bath", "#3EB34F", 30, False),
     ("Reading", "#3EB34F", 30, False),
@@ -97,22 +100,23 @@ ACTIVITY_BANK = (
     ("Unload dishwasher: dishes", "#3EB34F", 15, False),
     ("Unload dishwasher: cups", "#3EB34F", 15, False),
     # Yellow - medium energy
-    ("Church and fellowship", "#F2C81A", 180, True),  # Sunday morning until 1:00
+    ("Church and fellowship", "#F2C81A", 150, True),  # Sunday 10:30-1:00
     ("Physiotherapy", "#F2C81A", 180, True),  # Friday morning until 1:00
-    ("Seniors exercise class", "#F2C81A", 180, True),  # Wednesday morning until 1:00
-    ("Music lesson", "#F2C81A", 60, True),  # Tuesday evening
+    ("Seniors exercise class", "#F2C81A", 60, True),  # Wednesday 11:30-12:30
+    ("Music lesson", "#F2C81A", 30, True),  # Tuesday evening
     ("Music practice", "#F2C81A", 30, False),  # once during the week
     ("Cooking", "#F2C81A", 60, False),
     ("Laundry", "#F2C81A", 60, False),
     ("Phone call", "#F2C81A", 30, False),
+    ("Medical appointment", "#F2C81A", 120, True),
+    ("Special event", "#F2C81A", 120, False),
     # Red - high energy
-    ("Changing the bed", "#FF4848", 60, False),
+    ("Changing the bed", "#FF4848", 60, False),  # Saturdays, afternoon preferred
     ("Food prep (all at once)", "#FF4848", 180, False),  # red done in one go; green split in thirds
     ("Vacuuming", "#FF4848", 60, False),  # on a different day from washing floors
     ("Washing floors", "#FF4848", 60, False),
     ("Unload dishwasher (all at once)", "#FF4848", 45, False),  # red done in one go; green split in 3 parts
     ("Grocery shopping", "#FF4848", 90, False),
-    ("Medical appointment", "#FF4848", 60, True),
 )
 
 # percent of chance to do a GC-like sweep on save and clean empty and/or past hidden entries.

@@ -4,9 +4,10 @@ import locale
 import os
 from typing import Dict, Optional
 
-from flask import Flask, Response, send_from_directory
+from flask import Flask, Response, send_from_directory, request
 
 import config  # noqa: F401
+from flask_calendar.calendar_data import CalendarData
 from flask_calendar.actions import (
     delete_task_action,
     do_login_action,
@@ -164,6 +165,21 @@ def create_app(config_overrides: Optional[Dict] = None) -> Flask:
     app.jinja_env.filters["text_color_for"] = text_color_for
     app.jinja_env.filters["energy_level"] = energy_level
     app.jinja_env.filters["energy_name"] = energy_name
+
+    @app.context_processor
+    def display_settings() -> Dict:
+        """Theme, text size and energy words for every page, from the calendar's settings."""
+        defaults = app.config["DEFAULT_ENERGY_SETTINGS"]
+        display = {key: defaults[key] for key in ("theme", "font_size", "show_energy_words")}
+        calendar_id = (request.view_args or {}).get("calendar_id") if request else None
+        if calendar_id:
+            try:
+                calendar_data = CalendarData(app.config["DATA_FOLDER"], app.config["WEEK_STARTING_DAY"])
+                settings = calendar_data.load_settings(calendar_data.load_calendar(calendar_id), defaults)
+                display = {key: settings.get(key, display[key]) for key in display}
+            except Exception:
+                pass
+        return {"display": display}
 
     return app
 

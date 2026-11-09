@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ display.theme }}" data-font="{{ display.font_size }}"{% if not display.show_energy_words %} class="hide-energy-words"{% endif %}>
 <head>
     <meta charset="utf-8">
     <title>Week of {{ week_start.strftime("%B") }} {{ week_start.day }} - Energy Calendar</title>
@@ -451,9 +451,15 @@
             panel.hidden = false;
         }
 
+        function pageScale(column) {
+            // The Text size setting scales the page; screen positions then need scaling back
+            var box = column.getBoundingClientRect();
+            return column.offsetHeight > 0 && box.height > 0 ? box.height / column.offsetHeight : 1;
+        }
+
         function minutesFromPosition(column, clientY) {
             // Work out the time from where the activity was placed, rounded to 15 minutes
-            var offsetY = clientY - column.getBoundingClientRect().top;
+            var offsetY = (clientY - column.getBoundingClientRect().top) / pageScale(column);
             var start = startHour * 60 + Math.round((offsetY / hourHeight) * 4) * 15;
             return Math.max(startHour * 60, Math.min(start, endHour * 60 - 15));
         }
@@ -641,7 +647,8 @@
                 }
                 moving.active = true;
                 task.classList.add("week-task-moving");
-                task.style.transform = "translate(" + dx + "px, " + dy + "px)";
+                var scale = pageScale(task.parentNode);
+                task.style.transform = "translate(" + (dx / scale) + "px, " + (dy / scale) + "px)";
                 var target = columnAt(event.clientX, event.clientY);
                 columns.forEach(function (column) {
                     column.classList.toggle("drop-target", column === target);

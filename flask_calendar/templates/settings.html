@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ display.theme }}" data-font="{{ display.font_size }}"{% if not display.show_energy_words %} class="hide-energy-words"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <title>Settings - Energy Calendar</title>
@@ -83,6 +83,34 @@
                 {% endfor %}
                 <option value="24" {% if settings.day_end|int == 24 %}selected{% endif %}>24:00</option>
             </select>
+        </div>
+
+        <h2>Display</h2>
+
+        <div class="settings-row">
+            <label for="theme">Screen colours</label>
+            <select id="theme" name="theme">
+                <option value="light" {% if settings.theme == "light" %}selected{% endif %}>Light</option>
+                <option value="dark" {% if settings.theme == "dark" %}selected{% endif %}>Dark</option>
+                <option value="auto" {% if settings.theme == "auto" %}selected{% endif %}>Follow my tablet</option>
+            </select>
+        </div>
+
+        <div class="settings-row">
+            <label for="font_size">Text size</label>
+            <select id="font_size" name="font_size">
+                <option value="normal" {% if settings.font_size == "normal" %}selected{% endif %}>Normal</option>
+                <option value="large" {% if settings.font_size == "large" %}selected{% endif %}>Large</option>
+                <option value="extra-large" {% if settings.font_size == "extra-large" %}selected{% endif %}>Extra large</option>
+            </select>
+        </div>
+
+        <div class="settings-row">
+            <label class="check-option" for="show_energy_words">
+                <input type="checkbox" id="show_energy_words" name="show_energy_words" value="1"
+                    {% if settings.show_energy_words %}checked{% endif %}>
+                Show Low, Medium and High on each task
+            </label>
         </div>
 
         <input class="form-button form-button-primary" type="submit" value="Save" />
