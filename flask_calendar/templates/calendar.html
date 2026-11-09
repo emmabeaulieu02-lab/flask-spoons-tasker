@@ -366,16 +366,14 @@
     }
 
     document.getElementById("calendar").onclick = function(eventData) {
-        if (eventData.target.nodeName === "LI" && eventData.target.className === "day") {
-            if (++clicksCounter == 1) {
-                // Single click behaviour (nothing)
-                clicksTimeout = setTimeout(function() { clicksCounter = 0; }, 300);
-            } else {
-                clearTimeout(clicksTimeout);
-                clicksCounter = 0;
-                window.location = "/{{ calendar_id }}/{{ year }}/{{ month }}/new_task?day=" +
-                                    eventData.target.getAttribute("data-day");
-            }
+        // Clicking a day (anywhere except on a task) opens the week view for that day
+        var clickedDay = eventData.target.closest ? eventData.target.closest("li.day") : null;
+        var onTask = eventData.target.closest && eventData.target.closest("ul.tasks");
+        if (clickedDay && !onTask) {
+            var pad = function(n) { return (n < 10 ? "0" : "") + n; };
+            window.location = "/{{ calendar_id }}/week/?date=" + clickedDay.getAttribute("data-year") + "-" +
+                pad(parseInt(clickedDay.getAttribute("data-month"), 10)) + "-" +
+                pad(parseInt(clickedDay.getAttribute("data-day"), 10));
             return;
         }
 

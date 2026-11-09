@@ -25,6 +25,7 @@
     {% else %}
         <form autocomplete="off" method="POST" action="{{ base_url }}/{{ calendar_id }}/new_task">
     {% endif %}
+    <input type="hidden" name="back" value="{{ back }}" />
     <div id="task-details-form" class="task-details-form">
 
         <label for="title">Title</label>
@@ -400,7 +401,11 @@
                     })
                 .then(response => {
                     if (response.status === 200) {
+                        {% if back == "week" and day is defined %}
+                        window.location = "{{ base_url }}/{{ calendar_id }}/week/?date={{ "%04d-%02d-%02d"|format(year|int, month|int, day|int) }}";
+                        {% else %}
                         window.location = "{{ base_url }}/{{ calendar_id }}/?y={{ year }}&m={{ month }}";
+                        {% endif %}
                     }
                 });
             }

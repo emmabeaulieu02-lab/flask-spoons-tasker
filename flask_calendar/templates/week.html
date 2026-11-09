@@ -14,8 +14,9 @@
     <div id="statusbar">Processing...</div>
 
     <header class="header week-header">
+        {% set new_day = today if week_start <= today <= week_end else week_start %}
          <input type="button" class="header-button header-add" value="+"
-            onclick="window.location='/{{ calendar_id }}/{{ year }}/{{ month}}/new_task'" title="New task" aria-label="New task" />
+            onclick="window.location='/{{ calendar_id }}/{{ new_day.year }}/{{ new_day.month }}/new_task?day={{ new_day.day }}&back=week'" title="New task" aria-label="New task" />
 
         <a
             class="button header-button"
@@ -182,7 +183,8 @@
                         month=day.date.month,
                         day=day.date.day,
                         task_id=task['id'],
-                        repeats=1 if task.get('repetition_type') else None
+                        repeats=1 if task.get('repetition_type') else None,
+                        back='week'
                     ) }}"
                 >
                     {% if task.get('locked') %}
@@ -267,7 +269,8 @@
                         month=day.date.month,
                         day=day.date.day,
                         task_id=task['id'],
-                        repeats=1 if task.get('repetition_type') else None
+                        repeats=1 if task.get('repetition_type') else None,
+                        back='week'
                     ) }}"
                     title="
                         {{ task['start_time'] }}

@@ -49,6 +49,16 @@ def activity_bank_for(calendar_data: CalendarData, data: dict) -> List[Tuple[str
     return bank
 
 
+def back_to_week(calendar_id: str, year: Optional[int], month: Optional[int], day: Optional[int]) -> Optional[Response]:
+    """If the task was opened from the week view, go back to the week that holds its date."""
+    if request.form.get("back") != "week" or not (year and month and day):
+        return None
+    return redirect(
+        "{}/{}/week/?date={:04d}-{:02d}-{:02d}".format(current_app.config["BASE_URL"], calendar_id, year, month, day),
+        code=302,
+    )
+
+
 def energy_color(color: str) -> Optional[str]:
     """The energy colour exactly as written in the settings, or None if it is not green, yellow or red."""
     for code, _label in current_app.config["BUTTONS_COLORS_LIST"]:
@@ -225,6 +235,7 @@ def new_task_action(calendar_id: str, year: int, month: int) -> Response:
             task=task,
             base_url=current_app.config["BASE_URL"],
             editing=False,
+            back="week" if request.args.get("back") == "week" else "",
             emojis_enabled=emojis_enabled,
             button_default_color_value=current_app.config["BUTTON_CUSTOM_COLOR_VALUE"],
             buttons_colors=current_app.config["BUTTONS_COLORS_LIST"],
@@ -277,6 +288,7 @@ def edit_task_action(calendar_id: str, year: int, month: int, day: int, task_id:
             task=task,
             base_url=current_app.config["BASE_URL"],
             editing=True,
+            back="week" if request.args.get("back") == "week" else "",
             emojis_enabled=emojis_enabled,
             button_default_color_value=current_app.config["BUTTON_CUSTOM_COLOR_VALUE"],
             buttons_colors=current_app.config["BUTTONS_COLORS_LIST"],
@@ -341,6 +353,10 @@ def update_task_action(calendar_id: str, year: str, month: str, day: str, task_i
     )
 
     learn_from_placement(calendar_id, color, start_date, start_time, is_all_day)
+
+    week_redirect = back_to_week(calendar_id, updated_year, updated_month, updated_day)
+    if week_redirect is not None:
+        return week_redirect
 
     if updated_year is None:
         return redirect("{}/{}/".format(current_app.config["BASE_URL"], calendar_id), code=302)
@@ -443,6 +459,11 @@ def save_task_action(calendar_id: str) -> Response:
         calendar_data.add_activity(
             calendar_id, title[:60], bank_color, task_minutes(start_time, end_time, is_all_day), locked
         )
+
+    first_year, first_month, first_day = dates_to_create[0]
+    week_redirect = back_to_week(calendar_id, first_year, first_month, first_day)
+    if week_redirect is not None:
+        return week_redirect
 
     if year is None:
         return redirect("{}/{}/".format(current_app.config["BASE_URL"], calendar_id), code=302)
