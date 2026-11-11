@@ -89,7 +89,7 @@ DEFAULT_ENERGY_SETTINGS = {
 ACTIVITY_BANK = (
     # From the client's email of 9 November 2026 (after client meeting 3).
     # Green - low energy
-    ("Walk and small groceries", "#3EB34F", 90, True),  # daily, non-negotiable, ~10:00 or ~14:00
+    ("Walk", "#3EB34F", 90, True),  # daily, non-negotiable, ~10:00 or ~14:00
     ("Clean bathroom", "#3EB34F", 60, False),  # weekly, a day or two before the Tuesday music lesson
     ("Hobby: practise music", "#3EB34F", 30, False),  # weekly, a day or two before the Tuesday music lesson
     ("Meal prep 1/3: meat", "#3EB34F", 60, False),  # three consecutive days
