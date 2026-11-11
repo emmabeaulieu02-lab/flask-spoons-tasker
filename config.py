@@ -12,7 +12,7 @@ LOCALE = "en_US.UTF-8"
 # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 TIMEZONE = "US/Central"
 
-WEEK_STARTING_DAY = constants.WEEK_START_DAY_MONDAY
+WEEK_STARTING_DAY = constants.WEEK_START_DAY_SUNDAY  # North American calendar, like the client's iPad
 
 WEEK_VIEW_START_HOUR = 8
 WEEK_VIEW_END_HOUR = 21
@@ -87,36 +87,31 @@ DEFAULT_ENERGY_SETTINGS = {
 # Locked activities can't be moved by accident (for example appointments).
 # Edit this list with the client to match her own activities and energy levels.
 ACTIVITY_BANK = (
+    # From the client's email of 9 November 2026 (after client meeting 3).
     # Green - low energy
-    ("Walk", "#3EB34F", 90, True),  # daily, 10:00-11:30; Sunday after church
-    ("Breakfast", "#3EB34F", 30, False),  # daily
-    ("Bath", "#3EB34F", 30, False),
-    ("Reading", "#3EB34F", 30, False),
-    ("Rest", "#3EB34F", 60, False),
-    ("Food prep (part 1 of 3)", "#3EB34F", 60, False),  # one part per day
-    ("Food prep (part 2 of 3)", "#3EB34F", 60, False),
-    ("Food prep (part 3 of 3)", "#3EB34F", 60, False),
-    ("Unload dishwasher: cutlery", "#3EB34F", 15, False),  # one part per day
-    ("Unload dishwasher: dishes", "#3EB34F", 15, False),
-    ("Unload dishwasher: cups", "#3EB34F", 15, False),
+    ("Walk and small groceries", "#3EB34F", 90, True),  # daily, non-negotiable, ~10:00 or ~14:00
+    ("Clean bathroom", "#3EB34F", 60, False),  # weekly, a day or two before the Tuesday music lesson
+    ("Hobby: practise music", "#3EB34F", 30, False),  # weekly, a day or two before the Tuesday music lesson
+    ("Meal prep 1/3: meat", "#3EB34F", 60, False),  # three consecutive days
+    ("Meal prep 2/3: veggies", "#3EB34F", 60, False),
+    ("Meal prep 3/3: pasta or rice", "#3EB34F", 60, False),
+    ("Unload dishwasher 1/3: cutlery", "#3EB34F", 15, False),  # three consecutive days
+    ("Unload dishwasher 2/3: plates", "#3EB34F", 15, False),
+    ("Unload dishwasher 3/3: cups", "#3EB34F", 15, False),
+    ("Rest", "#3EB34F", 60, False),  # e.g. after changing the bed
     # Yellow - medium energy
-    ("Church and fellowship", "#F2C81A", 150, True),  # Sunday 10:30-1:00
-    ("Physiotherapy", "#F2C81A", 180, True),  # Friday morning until 1:00
-    ("Seniors exercise class", "#F2C81A", 60, True),  # Wednesday 11:30-12:30
-    ("Music lesson", "#F2C81A", 30, True),  # Tuesday evening
-    ("Music practice", "#F2C81A", 30, False),  # once during the week
-    ("Cooking", "#F2C81A", 60, False),
-    ("Laundry", "#F2C81A", 60, False),
-    ("Phone call", "#F2C81A", 30, False),
-    ("Medical appointment", "#F2C81A", 120, True),
+    ("Church and fellowship", "#F2C81A", 90, True),  # Sunday, service 10:30-12:00
+    ("Music lesson", "#F2C81A", 30, True),  # Tuesday 18:00, at home
+    ("Exercise class", "#F2C81A", 60, True),  # Wednesday 11:30-12:30 (walk moves to 14:00)
+    ("Medical appointment", "#F2C81A", 120, True),  # Thursdays 9:30-11:30 and 12:30-14:30, or as needed
+    ("Physiotherapy", "#F2C81A", 120, True),  # Friday 10:00-12:00
+    ("Laundry and hanging clothes", "#F2C81A", 60, False),
+    ("Vacuuming", "#F2C81A", 60, False),  # a day or two before the Tuesday music lesson
+    ("Washing floors", "#F2C81A", 60, False),  # occasional
+    ("Lunch with a friend", "#F2C81A", 90, False),  # occasional
     ("Special event", "#F2C81A", 120, False),
     # Red - high energy
-    ("Changing the bed", "#FF4848", 60, False),  # Saturdays, afternoon preferred
-    ("Food prep (all at once)", "#FF4848", 180, False),  # red done in one go; green split in thirds
-    ("Vacuuming", "#FF4848", 60, False),  # on a different day from washing floors
-    ("Washing floors", "#FF4848", 60, False),
-    ("Unload dishwasher (all at once)", "#FF4848", 45, False),  # red done in one go; green split in 3 parts
-    ("Grocery shopping", "#FF4848", 90, False),
+    ("Change bed and towels", "#FF4848", 60, True),  # Saturday afternoon, weekly; rest afterwards
 )
 
 # percent of chance to do a GC-like sweep on save and clean empty and/or past hidden entries.

@@ -31,6 +31,8 @@ class CalendarData:
         self.data_folder = data_folder
         self.gregorian_calendar = GregorianCalendar
         self.gregorian_calendar.setfirstweekday(first_weekday)
+        # Weeks may start on Sunday; repeats always use Monday = 0 ... Sunday = 6
+        self.first_weekday = first_weekday
 
     def load_calendar(self, filename: str) -> Dict:
         with open(os.path.join(".", self.data_folder, "{}.json".format(filename))) as file:
@@ -468,9 +470,10 @@ class CalendarData:
                 id_str = str(task["id"])
                 monthly_task_assigned = False
                 for week in self.gregorian_calendar.month_days_with_weekday(source_year, source_month):
-                    for weekday, day in enumerate(week):
+                    for column, day in enumerate(week):
                         if day == 0:
                             continue
+                        weekday = (column + self.first_weekday) % 7
                         day_str = str(day)
                         if (
                             task["repetition_type"] == self.REPETITION_TYPE_WEEKLY
