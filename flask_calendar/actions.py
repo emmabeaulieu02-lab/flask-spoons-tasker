@@ -484,6 +484,8 @@ def delete_task_action(calendar_id: str, year: str, month: str, day: str, task_i
         month_str=month,
         day_str=day,
         task_id=int(task_id),
+        # The task form sends unlocked=1 when "Locked" was unticked on screen, so there is no need to save first
+        force=request.args.get("unlocked") == "1",
     )
     if not deleted:
         return cast(Response, make_response(jsonify({"error": "This task is locked. Unlock it first."}), 423))

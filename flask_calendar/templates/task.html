@@ -394,7 +394,8 @@
 
         document.getElementById("delete-task").onclick = function() {
             if (confirm("Remove task '" + document.getElementById("title").value +  "'?") === true) {
-                fetch("{{ base_url }}/{{ calendar_id }}/{{ year }}/{{ month }}/{{ day }}/{{ task.get("id") }}/",
+                const unlocked = document.getElementById("locked").checked ? "" : "?unlocked=1";
+                fetch("{{ base_url }}/{{ calendar_id }}/{{ year }}/{{ month }}/{{ day }}/{{ task.get("id") }}/" + unlocked,
                     {
                     method: "delete",
                     credentials: "include"
@@ -406,8 +407,11 @@
                         {% else %}
                         window.location = "{{ base_url }}/{{ calendar_id }}/?y={{ year }}&m={{ month }}";
                         {% endif %}
+                    } else {
+                        alert("The task could not be deleted. Please try again.");
                     }
-                });
+                })
+                .catch(() => alert("The task could not be deleted. Please check the connection and try again."));
             }
         };
     }
