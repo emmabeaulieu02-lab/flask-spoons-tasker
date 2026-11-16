@@ -2057,3 +2057,41 @@ ul.tasks li.energy-high,
 .reminder-actions .form-button {
     min-height: 52px;
 }
+
+/* Settings: notifications on this tablet */
+.push-panel {
+    background: var(--md-surface-mid);
+    border-radius: 16px;
+    margin: 16px 0;
+    padding: 16px 20px;
+}
+
+.push-panel h3 {
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+}
+
+.push-status {
+    font-weight: 500;
+}
+
+.push-help li {
+    margin: 6px 0;
+}
+
+.push-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* Elements hidden by script stay hidden even when a style gives them a display */
+[hidden] {
+    display: none !important;
+}
+
+.push-help {
+    list-style: decimal;
+    padding-left: 1.6em;
+}

@@ -6,6 +6,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#6750A4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Energy Calendar">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="{{ url_for("static", filename="icons/apple-touch-icon.png") }}">
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
@@ -94,7 +101,28 @@
                 <option value="{{ minutes }}" {% if minutes == settings.default_reminder %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-            <p class="settings-help">Used for activities placed from the bins and as the starting choice on the New task form. Reminders pop up on this tablet while the calendar is open.</p>
+            <p class="settings-help">Used for activities placed from the bins and as the starting choice on the New task form.</p>
+        </div>
+
+        <div class="push-panel" id="push-panel"
+            data-key-url="{{ url_for('push_key_action', calendar_id=calendar_id) }}"
+            data-subscribe-url="{{ url_for('push_subscribe_action', calendar_id=calendar_id) }}"
+            data-unsubscribe-url="{{ url_for('push_unsubscribe_action', calendar_id=calendar_id) }}"
+            data-test-url="{{ url_for('push_test_action', calendar_id=calendar_id) }}">
+            <h3>Notifications on this tablet</h3>
+            <p class="settings-help">Reminders always pop up while the calendar is open. Turn on notifications to get them even when the calendar is closed or the tablet is locked.</p>
+            <p id="push-status" class="push-status" role="status" aria-live="polite">Checking&hellip;</p>
+            <ol id="push-ios-help" class="push-help" hidden>
+                <li>In Safari, tap the <strong>Share</strong> button (the square with an arrow pointing up).</li>
+                <li>Tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li>
+                <li>Close Safari and open <strong>Energy Calendar</strong> from its new icon on the Home Screen.</li>
+                <li>Come back to this Settings page and tap <strong>Turn on notifications</strong>.</li>
+            </ol>
+            <div class="push-actions">
+                <button type="button" id="push-enable" class="form-button form-button-primary" hidden>Turn on notifications</button>
+                <button type="button" id="push-test" class="form-button" hidden>Send a test notification</button>
+                <button type="button" id="push-disable" class="form-button" hidden>Turn off notifications</button>
+            </div>
         </div>
 
         <h2>Display</h2>
@@ -170,6 +198,7 @@
     <p class="settings-help">Nothing yet. As you add and move tasks, it learns when you like to do them.</p>
     {% endif %}
 </main>
+    <script src="{{ url_for("static", filename="push-setup.js") }}" defer></script>
     <script src="{{ url_for("static", filename="reminders.js") }}" data-url="{{ url_for("reminders_action", calendar_id=calendar_id) }}" defer></script>
 </body>
 </html>

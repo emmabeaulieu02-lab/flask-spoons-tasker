@@ -7,6 +7,7 @@ from flask import abort, current_app, g, jsonify, make_response, redirect, rende
 from werkzeug.wrappers import Response
 
 import flask_calendar.constants as constants
+from flask_calendar import push
 from flask_calendar.app_utils import (
     add_session,
     authenticated,
@@ -103,6 +104,8 @@ def index_action() -> Response:
     username = get_session_username(session_id=str(request.cookies.get(constants.SESSION_ID)))
     authentication = get_authentication()
     user_data = authentication.user_data(username)
+    if request.args.get("view") == "week":  # the Home Screen app opens on the week view
+        return redirect("/{}/week/".format(user_data["default_calendar"]))
     return redirect("/{}/".format(user_data["default_calendar"]))
 
 
@@ -803,3 +806,48 @@ def reminders_action(calendar_id: str) -> Response:
                 }
             )
     return cast(Response, jsonify(items))
+
+
+@authenticated
+@authorized
+def push_key_action(calendar_id: str) -> Response:
+    return cast(Response, jsonify({"key": push.public_key(current_app)}))
+
+
+@authenticated
+@authorized
+def push_subscribe_action(calendar_id: str) -> Response:
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    if not push.add_subscription(calendar_data, calendar_id, request.get_json(silent=True) or {}):
+        return cast(Response, make_response(jsonify({"error": "Not a valid subscription"}), 400))
+    return cast(Response, jsonify({"ok": True}))
+
+
+@authenticated
+@authorized
+def push_unsubscribe_action(calendar_id: str) -> Response:
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    endpoint = (request.get_json(silent=True) or {}).get("endpoint", "")
+    push.remove_subscription(calendar_data, calendar_id, endpoint)
+    return cast(Response, jsonify({"ok": True}))
+
+
+@authenticated
+@authorized
+def push_test_action(calendar_id: str) -> Response:
+    """Sends a test notification to every device that turned notifications on for this calendar."""
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    subscriptions = calendar_data.load_calendar(calendar_id).get(push.KEY_SUBSCRIPTIONS, [])
+    sent, gone = push.send(
+        current_app,
+        subscriptions,
+        {
+            "title": "Energy Calendar",
+            "body": "Notifications are working. Reminders will appear like this.",
+            "tag": "test",
+            "url": "/{}/week/".format(calendar_id),
+        },
+    )
+    for endpoint in gone:
+        push.remove_subscription(calendar_data, calendar_id, endpoint)
+    return cast(Response, jsonify({"sent": sent, "devices": len(subscriptions)}))

@@ -200,6 +200,11 @@
         }
     }
 
+    /* Install the service worker so the Home Screen app can receive notifications */
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});
+    }
+
     load();
     setInterval(function () {
         if (Date.now() - lastLoaded > 10 * 60000) {

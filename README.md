@@ -217,3 +217,33 @@ authentication.add_user(
 # Delete a user
 authentication.delete_user(username="a username")
 ```
+
+
+## Reminder notifications (Home Screen app)
+
+Tasks can have a reminder ("Remind me" on the task form, default in Settings > Reminders).
+While the calendar is open, reminders pop up on the screen. To get them when the calendar is
+closed or the tablet is locked, the server sends them as notifications (Web Push).
+
+### Server setup (once)
+
+1. Install the new requirements: `pip install -r requirements.txt` (adds `pywebpush` and `tzdata`).
+2. In `config.py`, check:
+   - `TIMEZONE = "America/Toronto"` (reminders are sent on this clock)
+   - `VAPID_SUBJECT`: set it to a real team email, e.g. `"mailto:team@example.com"`
+   - `COOKIE_HTTPS_ONLY` / `BASE_URL` for the HTTPS site
+3. The site must be served over **HTTPS** (notifications don't work on plain http, except on `127.0.0.1`).
+4. Start the app as usual. On the first page visit it creates its push key in `push_keys/vapid_private.pem`
+   (ignored by git; keep it secret and keep it between restarts, or every device has to turn
+   notifications on again) and starts checking for due reminders every 30 seconds.
+5. Run **one** app process (one worker). With several workers each would check, and the
+   "already sent" record only limits duplicates. To use a cron job instead, set
+   `PUSH_REMINDERS_ENABLED = False` and run every minute:
+   `python -m flask_calendar.scripts.send_reminders`
+
+### On the client's iPad (iPadOS 16.4 or newer)
+
+1. Open the calendar in Safari, tap **Share**, then **Add to Home Screen**.
+2. Open **Energy Calendar** from the new icon and log in.
+3. Go to **Settings > Reminders**, tap **Turn on notifications**, then **Allow**.
+4. Tap **Send a test notification** to check. Focus / Do Not Disturb can silence notifications.

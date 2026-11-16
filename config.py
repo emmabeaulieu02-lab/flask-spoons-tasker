@@ -10,7 +10,12 @@ PASSWORD_SALT = "something random and full of non-standard characters"
 HOST_IP = "127.0.0.1"  # set to None for production
 LOCALE = "en_US.UTF-8"
 # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-TIMEZONE = "US/Central"
+TIMEZONE = "America/Toronto"  # the client's clock: reminders are sent on this time
+
+# Reminder notifications (Web Push) for the Home Screen app
+PUSH_REMINDERS_ENABLED = True  # check for due reminders every 30 s while the app runs
+VAPID_PRIVATE_KEY_FILE = "push_keys/vapid_private.pem"  # created automatically; keep it secret, don't commit it
+VAPID_SUBJECT = "mailto:energy-calendar@example.com"  # change to a team email address
 
 WEEK_STARTING_DAY = constants.WEEK_START_DAY_SUNDAY  # North American calendar, like the client's iPad
 

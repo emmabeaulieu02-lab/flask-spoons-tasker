@@ -7,6 +7,7 @@ from typing import Dict, Optional
 from flask import Flask, Response, send_from_directory, request
 
 import config  # noqa: F401
+from flask_calendar import push
 from flask_calendar.calendar_data import CalendarData
 from flask_calendar.actions import (
     delete_task_action,
@@ -26,6 +27,10 @@ from flask_calendar.actions import (
     forget_learning_action,
     remove_activity_action,
     reminders_action,
+    push_key_action,
+    push_subscribe_action,
+    push_unsubscribe_action,
+    push_test_action,
     apply_suggestion_action,
 )
 from flask_calendar.app_utils import task_details_for_markup
@@ -120,6 +125,30 @@ def create_app(config_overrides: Optional[Dict] = None) -> Flask:
     )
 
     app.add_url_rule("/<calendar_id>/reminders/", "reminders_action", reminders_action, methods=["GET"])
+    app.add_url_rule("/<calendar_id>/push/key", "push_key_action", push_key_action, methods=["GET"])
+    app.add_url_rule("/<calendar_id>/push/subscribe", "push_subscribe_action", push_subscribe_action, methods=["POST"])
+    app.add_url_rule(
+        "/<calendar_id>/push/unsubscribe", "push_unsubscribe_action", push_unsubscribe_action, methods=["POST"]
+    )
+    app.add_url_rule("/<calendar_id>/push/test", "push_test_action", push_test_action, methods=["POST"])
+
+    # Home Screen app: the service worker must be served from the site root to cover every page
+    def service_worker() -> Response:
+        response = send_from_directory(str(app.static_folder), "sw.js", mimetype="application/javascript")
+        response.headers["Cache-Control"] = "no-cache"
+        response.headers["Service-Worker-Allowed"] = "/"
+        return response
+
+    def web_manifest() -> Response:
+        return send_from_directory(str(app.static_folder), "manifest.webmanifest", mimetype="application/manifest+json")
+
+    app.add_url_rule("/sw.js", "service_worker", service_worker, methods=["GET"])
+    app.add_url_rule("/manifest.webmanifest", "web_manifest", web_manifest, methods=["GET"])
+
+    @app.before_request
+    def start_reminder_sender() -> None:
+        # Started on the first request, so the debug reloader's watcher process doesn't send too
+        push.start_scheduler(app)
     app.add_url_rule(
         "/<calendar_id>/settings/remove-activity/",
         "remove_activity_action",
