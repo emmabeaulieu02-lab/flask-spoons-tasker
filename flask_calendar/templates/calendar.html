@@ -108,6 +108,9 @@
                                 {% if task.get("locked") %}
                                     <span class="lock-tag" title="Locked"><span aria-hidden="true">&#128274;</span><span class="sr-only">Locked</span></span>
                                 {% endif %}
+                                {% if task.get("reminder") is not none %}
+                                    <span class="lock-tag" title="Reminder"><span aria-hidden="true">&#128276;</span><span class="sr-only">Reminder</span></span>
+                                {% endif %}
                                 {{ task["title"] }}
                                 <p class="accordion-hidden">
                                     {{ task["details"]|task_details_for_markup|safe }}
@@ -415,5 +418,6 @@
         return;
     };
 </script>
+    <script src="{{ url_for("static", filename="reminders.js") }}" data-url="{{ url_for("reminders_action", calendar_id=calendar_id) }}" defer></script>
 </body>
 </html>

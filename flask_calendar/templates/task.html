@@ -199,6 +199,15 @@
                     {% if task.get("locked") %}checked="checked"{% endif %} />
                 Locked: can't be moved or deleted by accident (for appointments, church, etc.)
             </label>
+            {% set current_reminder = task.get("reminder", -1) if editing else default_reminder %}
+            <div class="reminder-row">
+                <label for="reminder">Remind me</label>
+                <select id="reminder" name="reminder">
+                    {% for minutes, label in reminder_choices %}
+                    <option value="{{ minutes }}" {% if minutes == current_reminder %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             {% if not editing %}
             <label class="check-option" for="add_to_bank">
                 <input type="checkbox" id="add_to_bank" name="add_to_bank" value="1" />
@@ -416,5 +425,6 @@
         };
     }
 </script>
+    <script src="{{ url_for("static", filename="reminders.js") }}" data-url="{{ url_for("reminders_action", calendar_id=calendar_id) }}" defer></script>
 </body>
 </html>

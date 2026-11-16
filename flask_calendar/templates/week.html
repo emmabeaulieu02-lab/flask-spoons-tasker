@@ -190,6 +190,9 @@
                     {% if task.get('locked') %}
                     <span class="lock-tag" title="Locked"><span aria-hidden="true">&#128274;</span><span class="sr-only">Locked:</span></span>
                     {% endif %}
+                    {% if task.get('reminder') is not none %}
+                    <span class="lock-tag" title="Reminder"><span aria-hidden="true">&#128276;</span><span class="sr-only">Reminder:</span></span>
+                    {% endif %}
                     {% if task['color']|energy_name %}
                     <span class="energy-tag">{{ (task['color']|energy_name).split(" ")[0] }}<span class="sr-only"> energy</span></span>
                     {% endif %}
@@ -291,6 +294,9 @@
                         {% if task.get('locked') %}
                         <span class="lock-tag" title="Locked"><span aria-hidden="true">&#128274;</span><span class="sr-only">Locked:</span></span>
                         {% endif %}
+                        {% if task.get('reminder') is not none %}
+                        <span class="lock-tag" title="Reminder"><span aria-hidden="true">&#128276;</span><span class="sr-only">Reminder:</span></span>
+                        {% endif %}
                         {% if task.get('repetition_type') %}
                         <span class="lock-tag" title="Repeats every week"><span aria-hidden="true">&#8635;</span><span class="sr-only">Every week:</span></span>
                         {% endif %}
@@ -321,6 +327,7 @@
             Drag an activity onto the calendar. Or tap an activity, then tap a time on the calendar
             or choose a day and time below. To move a task, slide it to a new time, or tap it to change it.
             <span aria-hidden="true">&#128274;</span> = locked (can't be moved by accident),
+            <span aria-hidden="true">&#128276;</span> = reminder,
             <span aria-hidden="true">&#8635;</span> = repeats every week.
         </p>
         <div class="activity-bins">
@@ -701,5 +708,6 @@
         });
     })();
     </script>
+    <script src="{{ url_for("static", filename="reminders.js") }}" data-url="{{ url_for("reminders_action", calendar_id=calendar_id) }}" defer></script>
 </body>
 </html>

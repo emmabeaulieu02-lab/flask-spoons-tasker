@@ -80,7 +80,19 @@ DEFAULT_ENERGY_SETTINGS = {
     "theme": "light",  # light, dark or auto (follow the tablet). Client prefers light.
     "font_size": "normal",  # normal, large or extra-large
     "show_energy_words": True,  # show Low / Medium / High on each task
+    "default_reminder": -1,  # minutes before a task for new tasks; -1 = no reminder
 }
+
+# Reminder choices on the task form: (minutes before the task, label). -1 = no reminder.
+REMINDER_CHOICES = (
+    (-1, "No reminder"),
+    (0, "When it starts"),
+    (15, "15 minutes before"),
+    (30, "30 minutes before"),
+    (60, "1 hour before"),
+    (120, "2 hours before"),
+    (1440, "The day before"),
+)
 
 # Activity bank shown on the week view:
 # (name, energy colour, length in minutes, locked).

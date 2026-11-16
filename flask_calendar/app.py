@@ -25,6 +25,7 @@ from flask_calendar.actions import (
     save_settings_action,
     forget_learning_action,
     remove_activity_action,
+    reminders_action,
     apply_suggestion_action,
 )
 from flask_calendar.app_utils import task_details_for_markup
@@ -118,6 +119,7 @@ def create_app(config_overrides: Optional[Dict] = None) -> Flask:
         methods=["POST"],
     )
 
+    app.add_url_rule("/<calendar_id>/reminders/", "reminders_action", reminders_action, methods=["GET"])
     app.add_url_rule(
         "/<calendar_id>/settings/remove-activity/",
         "remove_activity_action",

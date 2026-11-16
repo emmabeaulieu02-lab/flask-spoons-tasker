@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple, cast  # noqa: F401
 
 from flask import abort, current_app, g, jsonify, make_response, redirect, render_template, request
@@ -47,6 +47,24 @@ def activity_bank_for(calendar_data: CalendarData, data: dict) -> List[Tuple[str
     bank = [item for item in current_app.config["ACTIVITY_BANK"] if item[0].lower() not in own_names]
     bank += [(a["title"], a["color"], int(a["minutes"]), bool(a["locked"])) for a in own]
     return bank
+
+
+def reminder_from_form(calendar_id: str) -> Optional[int]:
+    """Minutes before the task for its reminder, or None. Uses the default from Settings when the
+    request does not say (for example an activity placed from the bins)."""
+    allowed = {minutes for minutes, _label in current_app.config["REMINDER_CHOICES"]}
+    raw = request.form.get("reminder")
+    if raw is None:
+        calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+        settings = calendar_data.load_settings(
+            calendar_data.load_calendar(calendar_id), current_app.config["DEFAULT_ENERGY_SETTINGS"]
+        )
+        raw = settings.get("default_reminder", -1)
+    try:
+        minutes = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return minutes if minutes in allowed and minutes >= 0 else None
 
 
 def back_to_week(calendar_id: str, year: Optional[int], month: Optional[int], day: Optional[int]) -> Optional[Response]:
@@ -236,6 +254,15 @@ def new_task_action(calendar_id: str, year: int, month: int) -> Response:
             base_url=current_app.config["BASE_URL"],
             editing=False,
             back="week" if request.args.get("back") == "week" else "",
+            reminder_choices=current_app.config["REMINDER_CHOICES"],
+            default_reminder=CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+            .load_settings(
+                CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"]).load_calendar(
+                    calendar_id
+                ),
+                current_app.config["DEFAULT_ENERGY_SETTINGS"],
+            )
+            .get("default_reminder", -1),
             emojis_enabled=emojis_enabled,
             button_default_color_value=current_app.config["BUTTON_CUSTOM_COLOR_VALUE"],
             buttons_colors=current_app.config["BUTTONS_COLORS_LIST"],
@@ -289,6 +316,8 @@ def edit_task_action(calendar_id: str, year: int, month: int, day: int, task_id:
             base_url=current_app.config["BASE_URL"],
             editing=True,
             back="week" if request.args.get("back") == "week" else "",
+            reminder_choices=current_app.config["REMINDER_CHOICES"],
+            default_reminder=-1,
             emojis_enabled=emojis_enabled,
             button_default_color_value=current_app.config["BUTTON_CUSTOM_COLOR_VALUE"],
             buttons_colors=current_app.config["BUTTONS_COLORS_LIST"],
@@ -341,6 +370,7 @@ def update_task_action(calendar_id: str, year: str, month: str, day: str, task_i
         repetition_subtype=repetition_subtype,
         repetition_value=repetition_value,
         locked=locked,
+        reminder=reminder_from_form(calendar_id),
     )
     # For deletion of old task data use only url data (force: the old copy goes even if it was locked)
     calendar_data.delete_task(
@@ -408,6 +438,7 @@ def save_task_action(calendar_id: str) -> Response:
     repetition_subtype = request.form.get("repetition_subtype")
     repetition_value = int(request.form["repetition_value"])
     locked = request.form.get("locked", "0") == "1"
+    reminder = reminder_from_form(calendar_id)
 
     calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
 
@@ -449,6 +480,7 @@ def save_task_action(calendar_id: str) -> Response:
             repetition_subtype=repetition_subtype,
             repetition_value=repetition_value,
             locked=locked,
+            reminder=reminder,
         )
 
     learn_from_placement(calendar_id, color, startdate, start_time, is_all_day)
@@ -643,6 +675,7 @@ def settings_action(calendar_id: str):
         saved=request.args.get("saved") == "1",
         forgot=request.args.get("forgot") == "1",
         removed=request.args.get("removed") == "1",
+        reminder_choices=current_app.config["REMINDER_CHOICES"],
         learned=learned_summary(calendar_data.load_learned(data)),
         own_activities=calendar_data.load_activities(data),
         energy_names=dict(current_app.config["BUTTONS_COLORS_LIST"]),
@@ -679,7 +712,15 @@ def save_settings_action(calendar_id: str) -> Response:
     if font_size not in ("normal", "large", "extra-large"):
         font_size = "normal"
 
+    try:
+        default_reminder = int(request.form.get("default_reminder", -1))
+    except ValueError:
+        default_reminder = -1
+    if default_reminder not in {minutes for minutes, _label in current_app.config["REMINDER_CHOICES"]}:
+        default_reminder = -1
+
     settings = {
+        "default_reminder": default_reminder,
         "theme": theme,
         "font_size": font_size,
         "show_energy_words": request.form.get("show_energy_words") == "1",
@@ -731,3 +772,34 @@ def apply_suggestion_action(calendar_id: str) -> Response:
     return redirect(
         "{}/{}/week/?date={}&applied={}".format(current_app.config["BASE_URL"], calendar_id, week, moved), code=302
     )
+
+
+@authenticated
+@authorized
+def reminders_action(calendar_id: str) -> Response:
+    """Tasks with a reminder on the given day and the next one (the tablet works out the alert time)."""
+    try:
+        first_day = datetime.strptime(request.args.get("date", ""), "%Y-%m-%d").date()
+    except ValueError:
+        first_day = date.today()
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    data = calendar_data.load_calendar(calendar_id)
+    items = []
+    for offset in (0, 1):
+        day = first_day + timedelta(days=offset)
+        for task in calendar_data.tasks_for_date(day, data):
+            if "reminder" not in task:
+                continue
+            start = "08:00" if task.get("is_all_day") else (task.get("start_time") or "08:00")
+            items.append(
+                {
+                    "key": "{}-{}".format(task["id"], day.isoformat()),
+                    "title": task.get("title", ""),
+                    "date": day.isoformat(),
+                    "start": start[:5],
+                    "all_day": bool(task.get("is_all_day")),
+                    "minutes": int(task["reminder"]),
+                    "energy": current_app.config["ENERGY_LEVELS"].get((task.get("color") or "").lower(), ("", ""))[0],
+                }
+            )
+    return cast(Response, jsonify(items))

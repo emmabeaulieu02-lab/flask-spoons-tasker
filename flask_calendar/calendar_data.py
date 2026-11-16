@@ -385,6 +385,7 @@ class CalendarData:
         repetition_value: int,
         end_time: Optional[str] = None,
         locked: bool = False,
+        reminder: Optional[int] = None,
     ) -> bool:
         details = details if len(details) > 0 else "&nbsp;"
         data = self.load_calendar(calendar_id)
@@ -400,6 +401,8 @@ class CalendarData:
         }
         if locked:
             new_task["locked"] = True
+        if reminder is not None and reminder >= 0:
+            new_task["reminder"] = int(reminder)  # minutes before the start time
         if has_repetition:
             if repetition_type == self.REPETITION_SUBTYPE_MONTH_DAY and repetition_value == 0:
                 return False

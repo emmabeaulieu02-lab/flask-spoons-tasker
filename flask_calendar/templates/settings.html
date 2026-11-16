@@ -85,6 +85,18 @@
             </select>
         </div>
 
+        <h2>Reminders</h2>
+
+        <div class="settings-row">
+            <label for="default_reminder">Reminder for new tasks</label>
+            <select id="default_reminder" name="default_reminder">
+                {% for minutes, label in reminder_choices %}
+                <option value="{{ minutes }}" {% if minutes == settings.default_reminder %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <p class="settings-help">Used for activities placed from the bins and as the starting choice on the New task form. Reminders pop up on this tablet while the calendar is open.</p>
+        </div>
+
         <h2>Display</h2>
 
         <div class="settings-row">
@@ -158,5 +170,6 @@
     <p class="settings-help">Nothing yet. As you add and move tasks, it learns when you like to do them.</p>
     {% endif %}
 </main>
+    <script src="{{ url_for("static", filename="reminders.js") }}" data-url="{{ url_for("reminders_action", calendar_id=calendar_id) }}" defer></script>
 </body>
 </html>

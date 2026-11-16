@@ -1989,3 +1989,71 @@ ul.tasks li.energy-high,
 .week-day-number {
     font-weight: 500;
 }
+
+/* ---------- Reminders ---------- */
+.reminder-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin: 12px 0;
+}
+
+.reminder-row label {
+    font-weight: 500;
+}
+
+.reminder-overlay {
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 16px;
+    position: fixed;
+    z-index: 1000;
+}
+
+.reminder-box {
+    background: var(--md-surface-high);
+    border-radius: 28px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    color: var(--md-on-surface);
+    max-width: 480px;
+    padding: 24px 28px;
+    width: 100%;
+}
+
+.reminder-label {
+    color: var(--md-on-surface-variant);
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0 0 12px 0;
+}
+
+.reminder-title {
+    border-radius: 12px;
+    font-size: 1.6rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0;
+    padding: 12px 16px;
+}
+
+.reminder-when {
+    font-size: 1.25rem;
+    margin: 16px 0 24px 0;
+}
+
+.reminder-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.reminder-actions .form-button {
+    min-height: 52px;
+}
