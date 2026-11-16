@@ -2095,3 +2095,15 @@ ul.tasks li.energy-high,
     list-style: decimal;
     padding-left: 1.6em;
 }
+
+.push-status-problem {
+    background: var(--md-error-container);
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.push-panel input[type="tel"] {
+    font-size: 1.1rem;
+    max-width: 16em;
+    min-height: 48px;
+}

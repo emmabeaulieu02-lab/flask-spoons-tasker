@@ -31,6 +31,7 @@ from flask_calendar.actions import (
     push_subscribe_action,
     push_unsubscribe_action,
     push_test_action,
+    sms_test_action,
     apply_suggestion_action,
 )
 from flask_calendar.app_utils import task_details_for_markup
@@ -131,6 +132,7 @@ def create_app(config_overrides: Optional[Dict] = None) -> Flask:
         "/<calendar_id>/push/unsubscribe", "push_unsubscribe_action", push_unsubscribe_action, methods=["POST"]
     )
     app.add_url_rule("/<calendar_id>/push/test", "push_test_action", push_test_action, methods=["POST"])
+    app.add_url_rule("/<calendar_id>/sms/test", "sms_test_action", sms_test_action, methods=["POST"])
 
     # Home Screen app: the service worker must be served from the site root to cover every page
     def service_worker() -> Response:

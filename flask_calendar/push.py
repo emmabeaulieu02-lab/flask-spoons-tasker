@@ -1,4 +1,4 @@
-"""Reminder notifications sent from the server (Web Push).
+"""Reminder notifications sent from the server (Web Push), and text messages (see sms.py).
 
 The client adds the calendar to her iPad's Home Screen and turns on notifications in
 Settings. Her iPad then gives us a "subscription" (an address for her device). Every
@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from cryptography.hazmat.primitives import serialization
 from flask import Flask
 
+from flask_calendar import sms
 from flask_calendar.calendar_data import CalendarData
 
 KEY_SUBSCRIPTIONS = "push_subscriptions"
@@ -190,7 +191,9 @@ def run_once(app: Flask, now: Optional[datetime] = None) -> int:
             data = calendar_data.load_calendar(calendar_id)
         except Exception:
             continue
-        if not data.get(KEY_SUBSCRIPTIONS):
+        settings = data.get("settings", {})
+        phone = settings.get("sms_phone") if settings.get("sms_enabled") and sms.configured(app) else None
+        if not data.get(KEY_SUBSCRIPTIONS) and not phone:
             continue
         sent_log = data.get(KEY_SENT, {})
         changed = False
@@ -198,18 +201,21 @@ def run_once(app: Flask, now: Optional[datetime] = None) -> int:
             if key in sent_log:
                 continue
             energy = levels.get((task.get("color") or "").lower(), ("", ""))[1]
-            sent, gone = send(app, data[KEY_SUBSCRIPTIONS], message_for(task, day, now, calendar_id, energy))
+            message = message_for(task, day, now, calendar_id, energy)
+            sent, gone = send(app, data.get(KEY_SUBSCRIPTIONS, []), message) if data.get(KEY_SUBSCRIPTIONS) else (0, [])
             total += sent
+            if phone and sms.send_text(app, phone, sms.text_for(message))[0]:
+                total += 1
             sent_log[key] = now.isoformat(timespec="minutes")
             if gone:
-                data[KEY_SUBSCRIPTIONS] = [s for s in data[KEY_SUBSCRIPTIONS] if s["endpoint"] not in gone]
+                data[KEY_SUBSCRIPTIONS] = [s for s in data.get(KEY_SUBSCRIPTIONS, []) if s["endpoint"] not in gone]
             changed = True
         if changed:
             # Re-read just before saving so edits made in the meantime are not lost
             fresh = calendar_data.load_calendar(calendar_id)
             cutoff = (now - timedelta(days=3)).isoformat()
             fresh[KEY_SENT] = {k: v for k, v in sent_log.items() if v >= cutoff}
-            fresh[KEY_SUBSCRIPTIONS] = data[KEY_SUBSCRIPTIONS]
+            fresh[KEY_SUBSCRIPTIONS] = data.get(KEY_SUBSCRIPTIONS, [])
             calendar_data._save_calendar(fresh, filename=calendar_id)
     return total
 

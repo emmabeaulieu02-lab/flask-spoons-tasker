@@ -125,6 +125,37 @@
             </div>
         </div>
 
+        <div class="push-panel" id="text-reminders">
+            <h3>Text messages</h3>
+            <p class="settings-help">Get each reminder as a text message on your phone too.</p>
+            {% if sms_result == "sent" %}
+            <p class="push-status" role="status">A test text was sent to {{ sms_phone }}. It should arrive in a minute.</p>
+            {% elif sms_result == "bad-phone" %}
+            <p class="push-status push-status-problem" role="alert">That phone number doesn't look right. Please enter 10 digits, like 613 555 1234.</p>
+            {% elif sms_result == "not-set-up" %}
+            <p class="push-status push-status-problem" role="alert">Your number is saved, but texting isn't set up on the server yet. Please ask the team.</p>
+            {% elif sms_result == "failed" %}
+            <p class="push-status push-status-problem" role="alert">The test text could not be sent. Please check the number, or ask the team.</p>
+            {% elif not sms_ready %}
+            <p class="settings-help">Texting isn't set up on the server yet. You can still enter your number now.</p>
+            {% endif %}
+            <div class="settings-row">
+                <label for="sms_phone">Mobile number</label>
+                <input type="tel" id="sms_phone" name="sms_phone" value="{{ sms_phone }}"
+                    autocomplete="tel" inputmode="tel" placeholder="613 555 1234">
+            </div>
+            <div class="settings-row">
+                <label class="check-option" for="sms_enabled">
+                    <input type="checkbox" id="sms_enabled" name="sms_enabled" value="1"
+                        {% if settings.sms_enabled %}checked{% endif %}>
+                    Text me my reminders
+                </label>
+            </div>
+            <div class="push-actions">
+                <button type="submit" class="form-button" formaction="{{ url_for('sms_test_action', calendar_id=calendar_id) }}">Save and send a test text</button>
+            </div>
+        </div>
+
         <h2>Display</h2>
 
         <div class="settings-row">

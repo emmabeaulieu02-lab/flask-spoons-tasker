@@ -247,3 +247,28 @@ closed or the tablet is locked, the server sends them as notifications (Web Push
 2. Open **Energy Calendar** from the new icon and log in.
 3. Go to **Settings > Reminders**, tap **Turn on notifications**, then **Allow**.
 4. Tap **Send a test notification** to check. Focus / Do Not Disturb can silence notifications.
+
+## Reminders by text message (SMS)
+
+The client can also get each reminder as a text: **Settings > Reminders > Text messages**,
+enter her mobile number, tick **Text me my reminders**, then **Save and send a test text**.
+Texts are sent by the same 30-second reminder check as the notifications, through
+[Twilio](https://www.twilio.com).
+
+### Server setup (once)
+
+1. Create a Twilio account and get a phone number with SMS (a Canadian number, e.g. 613).
+   Cost is about US$1.15 a month for the number plus about US$0.01 a text.
+   On a free trial account, Twilio only texts numbers you have verified in the Twilio console
+   and adds "Sent from your Twilio trial account" to each text: fine for the demo.
+2. Set three environment variables on the server (they are secrets: never put them in
+   `config.py` or commit them):
+   ```
+   TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   TWILIO_AUTH_TOKEN=your_auth_token
+   TWILIO_FROM_NUMBER=+16135550100
+   ```
+3. Restart the app. Until all three are set, the Settings page says texting isn't set up yet,
+   and the client's number is still saved.
+
+Replying STOP to a text turns texts off on Twilio's side; START turns them back on.

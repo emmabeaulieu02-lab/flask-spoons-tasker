@@ -1,3 +1,5 @@
+import os
+
 import flask_calendar.constants as constants
 
 DEBUG = True
@@ -16,6 +18,13 @@ TIMEZONE = "America/Toronto"  # the client's clock: reminders are sent on this t
 PUSH_REMINDERS_ENABLED = True  # check for due reminders every 30 s while the app runs
 VAPID_PRIVATE_KEY_FILE = "push_keys/vapid_private.pem"  # created automatically; keep it secret, don't commit it
 VAPID_SUBJECT = "mailto:energy-calendar@example.com"  # change to a team email address
+
+# Reminders by text message (SMS) through Twilio. These are secrets: set them as environment
+# variables on the server, never in this file. Texting stays off until all three are set.
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
+TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER", "")  # the Twilio number, e.g. +16135550100
+SMS_API_URL = "https://api.twilio.com/2010-04-01"
 
 WEEK_STARTING_DAY = constants.WEEK_START_DAY_SUNDAY  # North American calendar, like the client's iPad
 
@@ -86,6 +95,8 @@ DEFAULT_ENERGY_SETTINGS = {
     "font_size": "normal",  # normal, large or extra-large
     "show_energy_words": True,  # show Low / Medium / High on each task
     "default_reminder": -1,  # minutes before a task for new tasks; -1 = no reminder
+    "sms_enabled": False,  # also send reminders as text messages
+    "sms_phone": "",  # mobile number for text reminders, e.g. +16135551234
 }
 
 # Reminder choices on the task form: (minutes before the task, label). -1 = no reminder.

@@ -7,7 +7,7 @@ from flask import abort, current_app, g, jsonify, make_response, redirect, rende
 from werkzeug.wrappers import Response
 
 import flask_calendar.constants as constants
-from flask_calendar import push
+from flask_calendar import push, sms
 from flask_calendar.app_utils import (
     add_session,
     authenticated,
@@ -679,6 +679,9 @@ def settings_action(calendar_id: str):
         forgot=request.args.get("forgot") == "1",
         removed=request.args.get("removed") == "1",
         reminder_choices=current_app.config["REMINDER_CHOICES"],
+        sms_ready=sms.configured(current_app),
+        sms_result=request.args.get("sms", ""),
+        sms_phone=sms.display_phone(settings.get("sms_phone", "")),
         learned=learned_summary(calendar_data.load_learned(data)),
         own_activities=calendar_data.load_activities(data),
         energy_names=dict(current_app.config["BUTTONS_COLORS_LIST"]),
@@ -686,10 +689,8 @@ def settings_action(calendar_id: str):
     )
 
 
-@authenticated
-@authorized
-def save_settings_action(calendar_id: str) -> Response:
-    """Saves the balance settings, keeping every value within a sensible range."""
+def _settings_from_form() -> Tuple[dict, bool]:
+    """Settings from the Settings form, kept within sensible ranges. Also says if the phone number was invalid."""
     defaults = current_app.config["DEFAULT_ENERGY_SETTINGS"]
 
     def number(name: str, minimum: float, maximum: float) -> float:
@@ -722,6 +723,10 @@ def save_settings_action(calendar_id: str) -> Response:
     if default_reminder not in {minutes for minutes, _label in current_app.config["REMINDER_CHOICES"]}:
         default_reminder = -1
 
+    phone_text = request.form.get("sms_phone", "").strip()
+    phone = sms.normalize_phone(phone_text) if phone_text else ""
+    bad_phone = phone is None
+
     settings = {
         "default_reminder": default_reminder,
         "theme": theme,
@@ -733,12 +738,46 @@ def save_settings_action(calendar_id: str) -> Response:
         "rest_after_red_day": request.form.get("rest_after_red_day") == "1",
         "day_start": day_start,
         "day_end": day_end,
+        "sms_enabled": request.form.get("sms_enabled") == "1",
+        "sms_phone": phone or "",
     }
+    if not settings["sms_phone"]:
+        settings["sms_enabled"] = False
+    return settings, bad_phone
 
+
+@authenticated
+@authorized
+def save_settings_action(calendar_id: str) -> Response:
+    """Saves the settings."""
+    settings, bad_phone = _settings_from_form()
     calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
     calendar_data.save_settings(calendar_id, settings)
+    result = "saved=1" + ("&sms=bad-phone#text-reminders" if bad_phone else "")
+    return redirect("{}/{}/settings/?{}".format(current_app.config["BASE_URL"], calendar_id, result), code=302)
 
-    return redirect("{}/{}/settings/?saved=1".format(current_app.config["BASE_URL"], calendar_id), code=302)
+
+@authenticated
+@authorized
+def sms_test_action(calendar_id: str) -> Response:
+    """Saves the settings, then sends a test text to the phone number."""
+    settings, bad_phone = _settings_from_form()
+    calendar_data = CalendarData(current_app.config["DATA_FOLDER"], current_app.config["WEEK_STARTING_DAY"])
+    calendar_data.save_settings(calendar_id, settings)
+    if bad_phone or not settings["sms_phone"]:
+        result = "bad-phone"
+    elif not sms.configured(current_app):
+        result = "not-set-up"
+    else:
+        sent, _error = sms.send_text(
+            current_app,
+            settings["sms_phone"],
+            "Energy Calendar: text reminders are working. Your reminders will arrive like this.",
+        )
+        result = "sent" if sent else "failed"
+    return redirect(
+        "{}/{}/settings/?sms={}#text-reminders".format(current_app.config["BASE_URL"], calendar_id, result), code=302
+    )
 
 
 @authenticated
